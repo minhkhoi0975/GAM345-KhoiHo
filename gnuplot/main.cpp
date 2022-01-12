@@ -11,7 +11,7 @@ int main()
 	if (dataFile)
 	{
 		// Print out the parameters.
-		dataFile << "#x\tsin(x)\tcos(x)" << std::endl;
+		dataFile << "#t\tsin(t)\tcos(t)" << std::endl;
 
 		// Print out the data.
 		for (float t = 0; t <= 6.2f; t += 0.1f)
