@@ -7,6 +7,7 @@
 #include <list>
 #include <ctime>
 #include <cstdlib>
+#include <random>
 #include "Grid.h"
 
 // Print the values of a grid.
@@ -15,11 +16,14 @@ void PrintGrid(const Grid& grid);
 // Generate a grid whose size is NxN.
 Grid GenerateGrid(const int& n);
 
+// Get a random integer.
+int GetRandomInteger(int minInclusive, int maxInclusive);
+
 // Randomly replace some elements in a grid with the specfic value.
 void RandomlySetValue(Grid& grid, const int& newValue, int elementsToReplace = 1);
 
 // Randomly get a cell in the grid that does not match the specified value.
-const std::pair<int, int>& RandomlyGetCell(const Grid& grid, const int& valueToIgnore);
+std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIgnore);
 
 // Flood fill the grid from the center.
 void FloodFillRecursive(Grid& grid, int row, int column, int value);
@@ -36,6 +40,8 @@ void TestFloodFillOutput();
 
 int main()
 {
+	// TestFloodFillOutput();
+	
 	// Generate the data file.
 	GenerateDataFile("my_data.txt");
 
@@ -120,6 +126,14 @@ Grid GenerateGrid(const int& n)
 	return Grid(values);
 }
 
+int GetRandomInteger(int minInclusive, int maxInclusive)
+{
+	static std::random_device randomDevice;
+	static std::default_random_engine engine{randomDevice()};
+	std::uniform_int_distribution<int> distribution{ minInclusive, maxInclusive };
+	return distribution(engine);
+}
+
 void RandomlySetValue(Grid& grid, const int& newValue, int elementsToReplace)
 {
 	if (elementsToReplace < 1)
@@ -131,8 +145,8 @@ void RandomlySetValue(Grid& grid, const int& newValue, int elementsToReplace)
 
 	while (replacedElements < elementsToReplace)
 	{
-		int randomRow = std::rand() % grid.GetWidth();
-		int randomColumn = std::rand() % grid.GetHeight();
+		int randomRow = GetRandomInteger(0, grid.GetWidth() - 1);
+		int randomColumn = GetRandomInteger(0, grid.GetHeight() - 1);
 
 		if (grid.GetValueAt(randomRow, randomColumn) != newValue)
 		{
@@ -142,7 +156,7 @@ void RandomlySetValue(Grid& grid, const int& newValue, int elementsToReplace)
 	}
 }
 
-const std::pair<int, int>& RandomlyGetCell(const Grid& grid, const int& valueToIgnore)
+std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIgnore)
 {
 	std::pair<int, int> cell;
 
@@ -155,8 +169,8 @@ const std::pair<int, int>& RandomlyGetCell(const Grid& grid, const int& valueToI
 
 	while (!grid.isIndexValid(cell.first, cell.second) || grid.GetValueAt(cell.first, cell.second) == valueToIgnore)
 	{
-		cell.first = std::rand() % grid.GetWidth();
-		cell.second = std::rand() % grid.GetHeight();
+		cell.first = GetRandomInteger(0, grid.GetWidth() - 1);
+		cell.second = GetRandomInteger(0, grid.GetHeight() - 1);
 	}
 
 	return cell;
@@ -181,7 +195,7 @@ bool GenerateDataFile(const std::string& dataFileName)
 		RandomlySetValue(grid0, 1, grid0.GetWidth() * grid0.GetHeight() * 0.3f);
 
 		// Get the starting cell where flood-filling begins.
-		std::pair<int, int> startingCell = RandomlyGetCell(grid0, 1);
+		std::pair<int, int> startingCell = GetRandomStartingCell(grid0, 1);
 
 		// Flood-fill the grid recursively.
 		Grid grid1(grid0);
@@ -237,11 +251,11 @@ void TestFloodFillOutput()
 {
 	// Test generating a grid.
 	Grid grid0 = GenerateGrid(10);
-	RandomlySetValue(grid0, 1, 30);
+	RandomlySetValue(grid0, 1, grid0.GetWidth() * grid0.GetHeight() * 0.3f);
 	PrintGrid(grid0);
 
 	// Get the starting cell.
-	std::pair<int, int> startingCell = RandomlyGetCell(grid0, 1);
+	std::pair<int, int> startingCell = GetRandomStartingCell(grid0, 1);
 	std::cout << "Starting position: (" << startingCell.first << ", " << startingCell.second << ")" << std::endl;
 
 	//Test flood-filling the grid recursively.
