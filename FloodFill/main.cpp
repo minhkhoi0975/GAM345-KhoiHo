@@ -12,7 +12,7 @@
 #include "Grid.h"
 
 // Print the values of a grid.
-void PrintGrid(const Grid& grid);
+void PrintGrid(const Grid& grid, const std::pair<int, int>& startingPosition = std::pair<int, int>(-1, -1));
 
 // Generate a grid whose size is NxN.
 Grid GenerateGrid(const int& n);
@@ -27,11 +27,11 @@ void RandomlySetValue(Grid& grid, const int& newValue, int elementsToReplace = 1
 std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIgnore);
 
 // Flood fill the grid from the center.
-void FloodFillRecursive(Grid& grid, int row, int column, int value);
-void FloodFillIterative(Grid& grid, int row, int column, int value);
+void FloodFillRecursive(Grid& grid, const int& row, const int& column, const int& value);
+void FloodFillIterative(Grid& grid, const int& row, const int& column, const int& value);
 
 // Generate a data file. Return true if the file is successfully generated.
-bool GenerateDataFile(const std::string& dataFileName);
+bool GenerateDataFile(const std::string& dataFileName, const int &minN, const int &maxN);
 
 // Generate a script file. Return true if the file is successfully generated.
 bool GenerateScriptFile(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName);
@@ -41,21 +41,19 @@ void TestFloodFillOutput();
 
 int main()
 {
-	TestFloodFillOutput();
+	// TestFloodFillOutput();
 	
-	/*
 	// Generate the data file.
-	GenerateDataFile("my_data.txt");
+	GenerateDataFile("my_data.txt", 10, 250);
 
 	// Generate the script file.
 	GenerateScriptFile("my_script.txt", "my_data.txt", "my_output.png");
 
 	// Run gnuplot.
 	system("gnuplot.exe my_script.txt");
-	*/
 }
 
-void PrintGrid(const Grid& grid)
+void PrintGrid(const Grid& grid, const std::pair<int, int> & startingPosition)
 {
 	std::cout << std::endl;
 
@@ -63,10 +61,12 @@ void PrintGrid(const Grid& grid)
 	{
 		for(int column = 0; column < grid.GetHeight(); column++)
 		{
-			// White for 0, red for 1, green for any other number.
+			// yellow for starting position, white for 0, red for 1, green for any other number.
 			int value = grid.GetValueAt(row, column);
 
-			if (value == 0)
+			if (row == startingPosition.first && column == startingPosition.second)
+				std::cout << "\033[96m";
+			else if (value == 0)
 				std::cout << "\033[39m";
 			else if (value == 1)
 				std::cout << "\033[31m";
@@ -84,7 +84,7 @@ void PrintGrid(const Grid& grid)
 	std::cout << "\033[39m";
 }
 
-void FloodFillRecursive(Grid& grid, int row, int column, int value)
+void FloodFillRecursive(Grid& grid, const int& row, const int& column, const int& value)
 {
 	// Stop filling if the currentcell is invalid or already filled.
 	if (!grid.isIndexValid(row, column) || grid.GetValueAt(row, column) == 1 || grid.GetValueAt(row, column) == value)
@@ -100,7 +100,7 @@ void FloodFillRecursive(Grid& grid, int row, int column, int value)
 	FloodFillRecursive(grid, row + 1, column, value);
 }
 
-void FloodFillIterative(Grid& grid, int row, int column, int value)
+void FloodFillIterative(Grid& grid, const int& row, const int& column, const int& value)
 {
 	// Don't fill if the starting cell is invalid.
 	if (!grid.isIndexValid(row, column) || grid.GetValueAt(row, column) == 1)
@@ -119,14 +119,14 @@ void FloodFillIterative(Grid& grid, int row, int column, int value)
 		// Fill the cell.
 		grid.SetValue(cell.first, cell.second, value);
 
-		if (grid.isIndexValid(cell.first + 1, cell.second) && grid.GetValueAt(cell.first + 1, cell.second) == 0)
-			stack.push_back(std::pair<int, int>(cell.first + 1, cell.second));
-		if (grid.isIndexValid(cell.first, cell.second + 1) && grid.GetValueAt(cell.first, cell.second + 1) == 0)
-			stack.push_back(std::pair<int, int>(cell.first, cell.second + 1));
-		if (grid.isIndexValid(cell.first, cell.second - 1) && grid.GetValueAt(cell.first, cell.second - 1) == 0)
-			stack.push_back(std::pair<int, int>(cell.first, cell.second - 1));
 		if (grid.isIndexValid(cell.first - 1, cell.second) && grid.GetValueAt(cell.first - 1, cell.second) == 0)
 			stack.push_back(std::pair<int, int>(cell.first - 1, cell.second));
+		if (grid.isIndexValid(cell.first, cell.second - 1) && grid.GetValueAt(cell.first, cell.second - 1) == 0)
+			stack.push_back(std::pair<int, int>(cell.first, cell.second - 1));
+		if (grid.isIndexValid(cell.first, cell.second + 1) && grid.GetValueAt(cell.first, cell.second + 1) == 0)
+			stack.push_back(std::pair<int, int>(cell.first, cell.second + 1));
+		if (grid.isIndexValid(cell.first + 1, cell.second) && grid.GetValueAt(cell.first + 1, cell.second) == 0)
+			stack.push_back(std::pair<int, int>(cell.first + 1, cell.second));
 	}
 }
 
@@ -191,12 +191,10 @@ std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIg
 		cell.second = GetRandomInteger(0, grid.GetHeight() - 1);
 	} while (!grid.isIndexValid(cell.first, cell.second) || grid.GetValueAt(cell.first, cell.second) == valueToIgnore);
 
-	std::cout << "Starting position: (" << cell.first << ", " << cell.second << ")" << std::endl;
-
 	return cell;
 }
 
-bool GenerateDataFile(const std::string& dataFileName)
+bool GenerateDataFile(const std::string& dataFileName, const int& minN, const int& maxN)
 {
 	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
 	
@@ -208,10 +206,10 @@ bool GenerateDataFile(const std::string& dataFileName)
 	// Get a seed for generating random numbers.
 	std::srand(std::time(nullptr));
 
-	for (int n = 10; n <= 1000; n++)
+	for (int n = minN; n <= maxN; n++)
 	{
 		// Generate a grid. Replace 30% of the grid with 1.
-		Grid grid0 = GenerateGrid(10);
+		Grid grid0 = GenerateGrid(n);
 		RandomlySetValue(grid0, 1, grid0.GetWidth() * grid0.GetHeight() * 0.3f);
 
 		// Get the starting cell where flood-filling begins.
@@ -233,6 +231,8 @@ bool GenerateDataFile(const std::string& dataFileName)
 
 		// Print out a row.
 		dataFile << n << "\t" << timeInterval1 << "\t" << timeInterval2 << "\n";
+
+		std::cout << "n=" << n << " has been printed out.\tRecursive floodfill: " << timeInterval1 << " ns.\tIterative floodfill: " << timeInterval2 << " ns." << std::endl;
 	}
 
 	// Close the data file.
@@ -270,7 +270,7 @@ bool GenerateScriptFile(const std::string& scriptFileName, const std::string& da
 void TestFloodFillOutput()
 {
 	// Test generating a grid.
-	Grid grid0 = GenerateGrid(100);
+	Grid grid0 = GenerateGrid(GetRandomInteger(10, 50));
 	RandomlySetValue(grid0, 1, grid0.GetWidth() * grid0.GetHeight() * 0.3f);
 	PrintGrid(grid0);
 
@@ -279,7 +279,7 @@ void TestFloodFillOutput()
 	std::cout << "Starting position: (" << startingCell.first << ", " << startingCell.second << ")" << std::endl;
 
 	//Test flood-filling the grid recursively.
-	PrintGrid(grid0);
+	PrintGrid(grid0, startingCell);
 
 	Grid grid1(grid0);
 
@@ -289,11 +289,11 @@ void TestFloodFillOutput()
 
 	auto timeInterval1 = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime1 - startTime1).count();
 
-	PrintGrid(grid1);
+	PrintGrid(grid1, startingCell);
 	std::cout << "Execution time for recursive flood fill: " << timeInterval1 << " ns" << std::endl;
 
 	// Test flood-filling the grid iteratively.
-	PrintGrid(grid0);
+	PrintGrid(grid0, startingCell);
 
 	Grid grid2(grid0);
 
@@ -303,6 +303,6 @@ void TestFloodFillOutput()
 
 	auto timeInterval2 = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime2 - startTime2).count();
 
-	PrintGrid(grid2);
+	PrintGrid(grid2, startingCell);
 	std::cout << "Execution time for iterative flood fill: " << timeInterval2 << " ns" << std::endl;
 }
