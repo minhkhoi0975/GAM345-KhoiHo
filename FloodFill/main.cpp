@@ -175,6 +175,8 @@ void RandomlySetValue(Grid& grid, const int& newValue, int elementsToReplace)
 std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIgnore)
 {
 	std::pair<int, int> cell;
+	cell.first = -1;
+	cell.second = -1;
 
 	if (grid.GetWidth() == 0 || grid.GetHeight() == 0)
 	{
@@ -183,11 +185,13 @@ std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIg
 		return cell;
 	}
 
-	while (!grid.isIndexValid(cell.first, cell.second) || grid.GetValueAt(cell.first, cell.second) == valueToIgnore)
+	do
 	{
 		cell.first = GetRandomInteger(0, grid.GetWidth() - 1);
 		cell.second = GetRandomInteger(0, grid.GetHeight() - 1);
-	}
+	} while (!grid.isIndexValid(cell.first, cell.second) || grid.GetValueAt(cell.first, cell.second) == valueToIgnore);
+
+	std::cout << "Starting position: (" << cell.first << ", " << cell.second << ")" << std::endl;
 
 	return cell;
 }
