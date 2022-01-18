@@ -8,6 +8,7 @@
 #include <ctime>
 #include <cstdlib>
 #include <random>
+#include <Windows.h>
 #include "Grid.h"
 
 // Print the values of a grid.
@@ -40,8 +41,9 @@ void TestFloodFillOutput();
 
 int main()
 {
-	// TestFloodFillOutput();
+	TestFloodFillOutput();
 	
+	/*
 	// Generate the data file.
 	GenerateDataFile("my_data.txt");
 
@@ -50,6 +52,7 @@ int main()
 
 	// Run gnuplot.
 	system("gnuplot.exe my_script.txt");
+	*/
 }
 
 void PrintGrid(const Grid& grid)
@@ -60,12 +63,25 @@ void PrintGrid(const Grid& grid)
 	{
 		for(int column = 0; column < grid.GetHeight(); column++)
 		{
+			// White for 0, red for 1, green for any other number.
+			int value = grid.GetValueAt(row, column);
+
+			if (value == 0)
+				std::cout << "\033[39m";
+			else if (value == 1)
+				std::cout << "\033[31m";
+			else
+				std::cout << "\033[32m";
+
 			std::cout << grid.GetValueAt(row, column) << " ";
 		}
 		std::cout << std::endl;
 	}
 
 	std::cout << std::endl;
+
+	// Reset the color.
+	std::cout << "\033[39m";
 }
 
 void FloodFillRecursive(Grid& grid, int row, int column, int value)
@@ -250,7 +266,7 @@ bool GenerateScriptFile(const std::string& scriptFileName, const std::string& da
 void TestFloodFillOutput()
 {
 	// Test generating a grid.
-	Grid grid0 = GenerateGrid(10);
+	Grid grid0 = GenerateGrid(100);
 	RandomlySetValue(grid0, 1, grid0.GetWidth() * grid0.GetHeight() * 0.3f);
 	PrintGrid(grid0);
 
