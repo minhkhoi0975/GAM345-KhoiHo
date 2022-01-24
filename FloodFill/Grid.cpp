@@ -1,64 +1,64 @@
 #include "Grid.h"
 
-Grid::Grid(std::vector<std::vector<int>>& values): values(values), width(values.size()), height(values.size() < 1 ? 0 : values[0].size())
+Grid::Grid(std::vector<std::vector<int>>& values): values(values), sizeX(values.size()), sizeY(values.size() < 1 ? 0 : values[0].size())
 {
 }
 
-Grid::Grid(std::vector<std::vector<int>>&& values): values(values), width(values.size()), height(values.size() < 1 ? 0 : values[0].size())
+Grid::Grid(std::vector<std::vector<int>>&& values): values(values), sizeX(values.size()), sizeY(values.size() < 1 ? 0 : values[0].size())
 {
 }
 
-int Grid::GetWidth() const
+int Grid::GetSizeX() const
 {
-	return width;
+	return sizeX;
 }
 
-int Grid::GetHeight() const
+int Grid::GetSizeY() const
 {
-	return height;
+	return sizeY;
 }
 
-bool Grid::isIndexValid(const int& row, const int& column) const
+bool Grid::isIndexValid(const int& xPos, const int& yPos) const
 {
 	// Check if the row is valid.
-	if (row < 0)
+	if (xPos < 0)
 		return false;
-	if (row >= width)
+	if (xPos >= sizeX)
 		return false;
 
 	// Check if the column is valid.
-	if (column < 0)
+	if (yPos < 0)
 		return false;
-	if (column >= height)
+	if (yPos >= sizeY)
 		return false;
 
 	return true;
 }
 
-int Grid::GetValueAt(const int& row, const int& column) const
+int Grid::GetValueAt(const int& xPos, const int& yPos) const
 {
-	return values[row][column];
+	return values[xPos][yPos];
 }
 
-const std::vector<int>& Grid::GetValuesAtRow(const int& row) const
+const std::vector<int>& Grid::GetValuesAtXPos(const int& xPos) const
 {
-	return values[row];
+	return values[xPos];
 }
 
-std::vector<int> Grid::GetValuesAtColumn(const int& column) const
+std::vector<int> Grid::GetValuesAtYPos(const int& yPos) const
 {
-	std::vector<int> columnValues;
-	columnValues.reserve(values.size());
+	std::vector<int> xPosValues;
+	xPosValues.reserve(values.size());
 
-	for (int i = 0; i < columnValues.capacity(); i++)
+	for (int i = 0; i < xPosValues.capacity(); i++)
 	{
-		columnValues.push_back(values[i][column]);
+		xPosValues.push_back(values[i][yPos]);
 	}
 
-	return columnValues;
+	return xPosValues;
 }
 
-void Grid::SetValue(const int& row, const int& column, const int& newValue)
+void Grid::SetValue(const int& xPos, const int& yPos, const int& newValue)
 {
-	values[row][column] = newValue;
+	values[xPos][yPos] = newValue;
 }

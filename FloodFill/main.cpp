@@ -41,8 +41,9 @@ void TestFloodFillOutput();
 
 int main()
 {
-	// TestFloodFillOutput();
+	TestFloodFillOutput();
 	
+	/*
 	// Generate the data file.
 	GenerateDataFile("my_data.txt", 10, 250);
 
@@ -51,15 +52,16 @@ int main()
 
 	// Run gnuplot.
 	system("gnuplot.exe my_script.txt");
+	*/
 }
 
 void PrintGrid(const Grid& grid, const std::pair<int, int> & startingPosition)
 {
 	std::cout << std::endl;
 
-	for (int row = 0; row < grid.GetWidth(); row++)
+	for (int column = 0; column < grid.GetSizeX(); column++)
 	{
-		for(int column = 0; column < grid.GetHeight(); column++)
+		for(int row = 0; row < grid.GetSizeY(); row++)
 		{
 			// yellow for starting position, white for 0, red for 1, green for any other number.
 			int value = grid.GetValueAt(row, column);
@@ -161,8 +163,8 @@ void RandomlySetValue(Grid& grid, const int& newValue, int elementsToReplace)
 
 	while (replacedElements < elementsToReplace)
 	{
-		int randomRow = GetRandomInteger(0, grid.GetWidth() - 1);
-		int randomColumn = GetRandomInteger(0, grid.GetHeight() - 1);
+		int randomRow = GetRandomInteger(0, grid.GetSizeX() - 1);
+		int randomColumn = GetRandomInteger(0, grid.GetSizeY() - 1);
 
 		if (grid.GetValueAt(randomRow, randomColumn) != newValue)
 		{
@@ -178,7 +180,7 @@ std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIg
 	cell.first = -1;
 	cell.second = -1;
 
-	if (grid.GetWidth() == 0 || grid.GetHeight() == 0)
+	if (grid.GetSizeX() == 0 || grid.GetSizeY() == 0)
 	{
 		cell.first = -1;
 		cell.second = -1;
@@ -187,8 +189,8 @@ std::pair<int, int> GetRandomStartingCell(const Grid& grid, const int& valueToIg
 
 	do
 	{
-		cell.first = GetRandomInteger(0, grid.GetWidth() - 1);
-		cell.second = GetRandomInteger(0, grid.GetHeight() - 1);
+		cell.first = GetRandomInteger(0, grid.GetSizeX() - 1);
+		cell.second = GetRandomInteger(0, grid.GetSizeY() - 1);
 	} while (!grid.isIndexValid(cell.first, cell.second) || grid.GetValueAt(cell.first, cell.second) == valueToIgnore);
 
 	return cell;
@@ -210,7 +212,7 @@ bool GenerateDataFile(const std::string& dataFileName, const int& minN, const in
 	{
 		// Generate a grid. Replace 30% of the grid with 1.
 		Grid grid0 = GenerateGrid(n);
-		RandomlySetValue(grid0, 1, grid0.GetWidth() * grid0.GetHeight() * 0.3f);
+		RandomlySetValue(grid0, 1, grid0.GetSizeX() * grid0.GetSizeY() * 0.3f);
 
 		// Get the starting cell where flood-filling begins.
 		std::pair<int, int> startingCell = GetRandomStartingCell(grid0, 1);
@@ -271,7 +273,7 @@ void TestFloodFillOutput()
 {
 	// Test generating a grid.
 	Grid grid0 = GenerateGrid(GetRandomInteger(10, 50));
-	RandomlySetValue(grid0, 1, grid0.GetWidth() * grid0.GetHeight() * 0.3f);
+	RandomlySetValue(grid0, 1, grid0.GetSizeX() * grid0.GetSizeY() * 0.3f);
 	PrintGrid(grid0);
 
 	// Get the starting cell.
