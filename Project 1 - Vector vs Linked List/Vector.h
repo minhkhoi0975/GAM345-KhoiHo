@@ -55,5 +55,5 @@ public:
 	void Insert(T element, int index);
 
 	// Adds or removes elements from the end of the container to achieve the given new size
-	void Resize(int size);
+	void Resize(int newSize);
 };
