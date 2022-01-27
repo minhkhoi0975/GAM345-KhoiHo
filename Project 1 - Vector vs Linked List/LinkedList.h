@@ -44,6 +44,12 @@ public:
 	// Return a reference to the element at the given index
 	T& At(const int& index);
 
+	// Get the head of the linked list.
+	T& GetHead();
+
+	// Get the tail of the linked list.
+	T& GetTail();
+
 	// Remove all elements from the list
 	void Clear();
 
@@ -58,6 +64,12 @@ public:
 
 	// Returns the index of the given value, -1 if not found
 	int Find(const T& value);
+
+	// Returns true if this value is in the container
+	bool Contains(const T& value);
+
+	// Insert the given element at the given position. Position 0 should insert the element at the beginning of the container
+	void Insert(T value, const int& index);
 };
 
 template<class T>
@@ -148,6 +160,28 @@ inline T& LinkedList<T>::At(const int& index)
 	{
 		throw std::invalid_argument("The index exceeds the size of the linked list.");
 	}
+}
+
+template<class T>
+inline T& LinkedList<T>::GetHead()
+{
+	if (head == nullptr)
+	{
+		throw std::exception("Cannot get the head since the linked list is empty.");
+	}
+
+	return head->value;
+}
+
+template<class T>
+inline T& LinkedList<T>::GetTail()
+{
+	if (head == nullptr)
+	{
+		throw std::exception("Cannot get the tail since the linked list is empty.");
+	}
+
+	return tail->value;
 }
 
 template<class T>
@@ -276,7 +310,7 @@ inline void LinkedList<T>::Erase(const T& value)
 		{
 			if (currentNode == tail)
 			{
-				tail = nullptr;
+				tail = previousNode;
 			}
 
 			previousNode->next = currentNode->next;
@@ -312,4 +346,75 @@ inline int LinkedList<T>::Find(const T& value)
 	}
 
 	return -1;
+}
+
+template<class T>
+inline bool LinkedList<T>::Contains(const T& value)
+{
+	Node<T>* currentNode = head;
+
+	while (currentNode != nullptr)
+	{
+		// IF the current node matches the value, return true.
+		if (currentNode->value == value)
+		{
+			return true;
+		}
+
+		// If not, move to the next node.
+		currentNode = currentNode->next;
+	}
+
+	// Cannot find the node we need, so return false.
+	return false;
+}
+
+template<class T>
+inline void LinkedList<T>::Insert(T value, const int& index)
+{
+	if (index < 0)
+	{
+		throw std::invalid_argument("The index must not be negative.");
+	}
+
+	// Case 1: The element is inserted at the head of the linked list.
+	else if (index == 0)
+	{
+		PushFront(value);
+	}
+
+	// Case 2: The element is inserted within the size of the linked list.
+	else if (index < size)
+	{
+		Node<T>* previousNode = head;
+		Node<T>* currentNode = head->next;
+
+		for (int currentIndex = 1; currentIndex < index; currentIndex++)
+		{
+			previousNode = currentNode;
+			currentNode = currentNode->next;
+		}
+
+		Node<T>* newNode = new Node<T>(value, currentNode);
+		previousNode->next = newNode;
+
+		size++;
+	}
+
+	// Case 3: The element is inserted at the end of the linked list.
+	else if (index == size)
+	{
+		PushBack(value);
+	}
+
+	// Case 4: The element is outside the linked list.
+	else
+	{
+		while (size < index)
+		{
+			PushBack(T());
+		}
+
+		PushBack(value);
+	}
 }

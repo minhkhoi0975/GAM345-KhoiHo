@@ -123,6 +123,13 @@ void PrintLinkedList(LinkedList<int>& linkedList)
 	// Print the size.
 	std::cout << "Size: " << linkedList.Size() << std::endl;
 
+	// Print the head and the tail.
+	if (linkedList.Size() > 0)
+	{
+		std::cout << "Head: " << linkedList.GetHead() << std::endl;
+		std::cout << "Tail: " << linkedList.GetTail() << std::endl;
+	}
+
 	std::cout << std::endl;
 }
 
@@ -131,6 +138,7 @@ void TestLinkedList()
 	LinkedList<int> linkedList;
 	PrintLinkedList(linkedList);
 
+	// Push back 5 elements.
 	linkedList.PushBack(5);
 	linkedList.PushBack(7);
 	linkedList.PushBack(1);
@@ -138,16 +146,20 @@ void TestLinkedList()
 	linkedList.PushBack(9);
 	PrintLinkedList(linkedList);
 
+	// Push front 2 elements.
 	linkedList.PushFront(3);
 	linkedList.PushFront(4);
 	PrintLinkedList(linkedList);
 
+	// Remove the head.
 	linkedList.EraseAt(0);
 	PrintLinkedList(linkedList);
 
+	// Remove an element in the middle.
 	linkedList.EraseAt(3);
 	PrintLinkedList(linkedList);
 
+	// Remove elements that match the values.
 	linkedList.Erase(7);
 	PrintLinkedList(linkedList);
 
@@ -157,6 +169,7 @@ void TestLinkedList()
 	linkedList.Erase(3);
 	PrintLinkedList(linkedList);
 
+	// Add 5 more elements to the linked list.
 	linkedList.PushBack(4);
 	linkedList.PushBack(4);
 	linkedList.PushBack(2);
@@ -164,6 +177,30 @@ void TestLinkedList()
 	linkedList.PushBack(1);
 	PrintLinkedList(linkedList);
 
+	linkedList.Insert(16, 0);
+	PrintLinkedList(linkedList);
+
+	linkedList.Insert(12, 3);
+	PrintLinkedList(linkedList);
+
+	linkedList.Insert(14, 9);
+	PrintLinkedList(linkedList);
+
+	linkedList.Insert(56, 20);
+	PrintLinkedList(linkedList);
+
+	// Check if the linked list contains values.
+	int value1 = 3;
+	std::cout << "The vector " << (linkedList.Contains(value1) ? "contains " : "does not contain ") << value1 << std::endl;
+	std::cout << "Value " << value1 << " is first found at element " << linkedList.Find(value1) << std::endl;
+	std::cout << std::endl;
+
+	int value2 = 8;
+	std::cout << "The vector " << (linkedList.Contains(value2) ? "contains " : "does not contain ") << value2 << std::endl;
+	std::cout << "Value " << value2 << " is first found at element " << linkedList.Find(value2) << std::endl;
+	std::cout << std::endl;
+
+	// Clear all the elements.
 	linkedList.Clear();
 	PrintLinkedList(linkedList);
 }
