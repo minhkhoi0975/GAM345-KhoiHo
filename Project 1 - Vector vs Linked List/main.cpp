@@ -3,11 +3,20 @@
 
 void PrintVector(Vector<int>& vector)
 {
+	std::cout << std::endl;
+
 	// Print the elements.
 	std::cout << "Elements: ";
-	for (int i = 0; i < vector.Size(); i++)
+	if (vector.Size() == 0)
 	{
-		std::cout << vector[i] << ' ';
+		std::cout << "none";
+	}
+	else
+	{
+		for (int i = 0; i < vector.Size(); i++)
+		{
+			std::cout << vector[i] << ' ';
+		}
 	}
 	std::cout << std::endl;
 
@@ -16,93 +25,79 @@ void PrintVector(Vector<int>& vector)
 
 	// Print the capacity.
 	std::cout << "Capacity: " << vector.GetCapacity() << std::endl;
+
+	std::cout << std::endl;
 }
 
 int main()
 {
-	// Test constructor and destructor.
-	/*
-	{
-		{
-			Vector<int> numbers;
-			numbers.Reserve(20000000);
-			system("pause");
-		}
-		system("pause");
-	}
-	*/
-
-	// Test pushing elements to the back.
-	{
-		{
-			Vector<int> numbers1;
-			numbers1.PushBack(7);
-			numbers1.PushBack(5);
-			numbers1.PushBack(3);
-			numbers1.PushBack(4);
-			numbers1.PushBack(1);
-
-			PrintVector(numbers1);
-		}
-
-		{
-			Vector<int> numbers2;
-			numbers2.Reserve(3);
-
-			numbers2.PushBack(7);
-			numbers2.PushBack(5);
-			numbers2.PushBack(3);
-			numbers2.PushBack(4);
-			numbers2.PushBack(1);
-
-			PrintVector(numbers2);
-		}
-
-		{
-			Vector<int> numbers3;
-			numbers3.Reserve(5);
-
-			numbers3.PushBack(7);
-			numbers3.PushBack(5);
-			numbers3.PushBack(3);
-			numbers3.PushBack(4);
-			numbers3.PushBack(1);
-
-			PrintVector(numbers3);
-		}
-	}
-
-	/*
+	// Test vector.
 	{
 		Vector<int> numbers;
 
-		numbers.Resize(10);
+		// Reserve 10 elements.
+		numbers.Reserve(10);
+		PrintVector(numbers);
 
-		for (int i = 0; i < numbers.Size(); i++)
-		{
-			std::cout << numbers[i] << ' ';
-		}
+		// Push back 5 elements.
+		numbers.PushBack(7);
+		numbers.PushBack(5);
+		numbers.PushBack(3);
+		numbers.PushBack(4);
+		numbers.PushBack(1);;
+		PrintVector(numbers);
+
+		// Push front 2 elements.
+		numbers.PushFront(2);
+		numbers.PushFront(6);
+		PrintVector(numbers);
+
+		// Add an element at the beginning of the vector.
+		numbers.Insert(14, 0);
+		PrintVector(numbers);
+
+		// Add an element in the middle of the vector.
+		numbers.Insert(19, 4);
+		PrintVector(numbers);
+
+		// Add an element at the end of the vector.
+		numbers.Insert(26, numbers.Size());
+		PrintVector(numbers);
+
+		// Add an element at the index outside the vector.
+		numbers.Insert(70, 20);
+		PrintVector(numbers);
+
+		// Change the values of some elements.
+		numbers[1] = 38;
+		numbers.At(7) = 491;
+		PrintVector(numbers);
+
+		// Remove an element at the beginning of the vector.
+		numbers.EraseAt(0);
+		PrintVector(numbers);
+
+		// Remove an element in the middle of the vector.
+		numbers.EraseAt(3);
+		PrintVector(numbers);
+
+		// Remove an element at the end of the vector.
+		numbers.EraseAt(numbers.Size() - 1);
+		PrintVector(numbers);
+
+		// Check if the vector contains values.
+		int value1 = 1;
+		std::cout << "The vector " << (numbers.Contains(value1) ? "contains " : "does not contain ") << value1 << std::endl;
+		std::cout << "Value " << value1 << " is first found at element " << numbers.Find(value1) << std::endl;
 		std::cout << std::endl;
 
-		std::cout << "Size: " << numbers.Size() << std::endl;
-		std::cout << "Capacity: " << numbers.GetCapacity() << std::endl;
-	}
-	*/
-
-	/*
-	{
-		Vector<int> numbers;
-		numbers.Resize(10);
-		numbers.Insert(2, 4);
-
-		for (int i = 0; i < numbers.Size(); i++)
-		{
-			std::cout << numbers[i] << ' ';
-		}
+		int value2 = 8;
+		std::cout << "The vector " << (numbers.Contains(value2) ? "contains " : "does not contain ") << value2 << std::endl;
+		std::cout << "Value " << value2 << " is first found at element " << numbers.Find(value2) << std::endl;
 		std::cout << std::endl;
 
-		std::cout << "Size: " << numbers.Size() << std::endl;
-		std::cout << "Capacity: " << numbers.GetCapacity() << std::endl;
+		// Clear the vector.
+		numbers.Clear();
+		PrintVector(numbers);
 	}
-	*/
 }

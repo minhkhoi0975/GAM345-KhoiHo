@@ -30,7 +30,8 @@ public:
 	// Return a reference to the element at the given index
 	T& At(int index);
 
-	//void Clear();
+	// Remove all elements from the list
+	void Clear();
 
 	// Returns the number of elements in this container
 	int Size() const;
@@ -72,34 +73,39 @@ inline Vector<T>::~Vector()
 }
 
 template<class T>
-inline void Vector<T>::PushFront(T newElement)
+void Vector<T>::PushFront(T newElement)
 {
+	// If the current size reaches the capacity, allocate more memory.
 	if (size == capacity)
 	{
 		Reserve(capacity + 1);
 	}
 
+	// Move every value to the right.
 	for (int i = size - 1; i >= 0; --i)
 	{
 		arr[i + 1] = arr[i];
 	}
 
+	// Assign the new value to the first element.
 	arr[0] = newElement;
 
-	size++;
+	++size;
 }
 
 template<class T>
-inline void Vector<T>::PushBack(T newElement)
+void Vector<T>::PushBack(T newElement)
 {
+	// If the current size reaches the capacity, allocate more memory.
 	if (size == capacity)
 	{
 		Reserve(capacity + 1);
 	}
 
+	// Assign the new value to the last element.
 	arr[size] = newElement;
 
-	size++;
+	++size;
 }
 
 template<class T>
@@ -124,20 +130,33 @@ inline T& Vector<T>::At(int index)
 }
 
 template<class T>
+inline void Vector<T>::Clear()
+{
+	size = 0;
+}
+
+template<class T>
 inline int Vector<T>::Size() const
 {
 	return size;
 }
 
 template<class T>
-inline void Vector<T>::Reserve(int newCapacity)
+void Vector<T>::Reserve(int newCapacity)
 {
+	// Cannot reserve if the capacity is not a positive number.
+	if (newCapacity <= 0)
+	{
+		throw std::invalid_argument("The capacity must be a positive number.");
+	}
+
+	// Only reserve if the new capacity is greater than the current capacity.
 	if (newCapacity > capacity)
 	{
 		// Create a new array.
 		T* newArr = new T[newCapacity];
 
-		// Copy elements from the old element to the new one.
+		// Copy elements from the old array to the new one.
 		for (int i = 0; i < size; ++i)
 		{
 			newArr[i] = arr[i];
@@ -161,21 +180,31 @@ inline int Vector<T>::GetCapacity() const
 }
 
 template<class T>
-inline void Vector<T>::EraseAt(const int& index)
+void Vector<T>::EraseAt(const int& index)
 {
-	if (index < 0 || index >= size)
-		return;
+	// Cannot erase the element if the index is less than 0.
+	if (index < 0)
+	{
+		throw std::invalid_argument("The index must not be negative.");
+	}
 
-	for (int i = index; i < size - 1; ++i)
+	// Cannot erase the element if the index exceeds the size of the vector.
+	if (index >= size)
+	{
+		throw std::invalid_argument("The index must not exceed the size of the vector.");
+	}
+
+	// Starting from the element right after the removed element, move the values to the left.
+	for (int i = index; i < size; ++i)
 	{
 		arr[i] = arr[i + 1];
 	}
 
-	size--;
+	--size;
 }
 
 template<class T>
-inline void Vector<T>::Erase(T value)
+void Vector<T>::Erase(T value)
 {
 	for (int i = 0; i < size; ++i)
 	{
@@ -188,7 +217,7 @@ inline void Vector<T>::Erase(T value)
 }
 
 template<class T>
-inline int Vector<T>::Find(const T& value) const
+int Vector<T>::Find(const T& value) const
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -202,7 +231,7 @@ inline int Vector<T>::Find(const T& value) const
 }
 
 template<class T>
-inline bool Vector<T>::Contains(const T& value) const
+bool Vector<T>::Contains(const T& value) const
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -216,32 +245,29 @@ inline bool Vector<T>::Contains(const T& value) const
 }
 
 template<class T>
-inline void Vector<T>::Insert(T element, const int& index)
+void Vector<T>::Insert(T element, const int& index)
 {
+	// Cannot insert the new element to the vector if the index is negative.
 	if (index < 0)
 	{
 		throw std::invalid_argument("The index must not be negative.");
 	}
 
-	if (index == 0)
+	// Case 1: The index is 0. 
+	else if (index == 0)
 	{
 		PushFront(element);
-		return;
 	}
 
-	if (index >= size)
-	{
-		Resize(index + 1);
-		arr[index] = element;
-	}
-	else
+	// Case 2: The index is within the size of the vector.
+	else if (index > 0 && index < size)
 	{
 		if (size == capacity)
 		{
 			Reserve(capacity + 1);
 		}
 
-		size++;
+		++size;
 
 		for (int i = size - 1; i >= index; --i)
 		{
@@ -250,22 +276,48 @@ inline void Vector<T>::Insert(T element, const int& index)
 
 		arr[index] = element;
 	}
+
+	// Case 3: The index is equal to the size of the vector.
+	else if (index == size)
+	{
+		PushBack(element);
+	}
+
+	// Case 4: The index is greater than the size of the vector.
+	else
+	{
+		// Resize the vector.
+		Resize(index + 1);
+
+		// Set the value of the last element.
+		arr[index] = element;
+	}
 }
 
 template<class T>
-inline void Vector<T>::Resize(int newSize)
+void Vector<T>::Resize(int newSize)
 {
+	// Cannot resize the vector if the new size is negative.
 	if (newSize < 0)
 	{
 		throw std::invalid_argument("The size must not be negative.");
 	}
 
+	// The function does nothing if the size remains unchanged.
 	if (newSize == size)
+	{
 		return;
+	}
+
+	// If the new size is lower than the current size, simply change size.
 	else if (newSize < size)
 	{
 		size = newSize;
 	}
+
+	// If the new size is greater than the current size:
+	// + Reserve the vector if the new size exceeds the capacity.
+	// + Assign default value to new elements.
 	else
 	{
 		if (newSize > capacity)
