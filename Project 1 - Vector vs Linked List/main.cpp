@@ -38,6 +38,10 @@ void TestVector()
 	numbers.Reserve(10);
 	PrintVector(numbers);
 
+	// Resize the vector to 5 elements.
+	numbers.Resize(5);
+	PrintVector(numbers);
+
 	// Push back 5 elements.
 	numbers.PushBack(7);
 	numbers.PushBack(5);
@@ -84,6 +88,10 @@ void TestVector()
 	numbers.EraseAt(numbers.Size() - 1);
 	PrintVector(numbers);
 
+	// Remove the first element that matches the value.
+	numbers.Erase(7);
+	PrintVector(numbers);
+
 	// Check if the vector contains values.
 	int value1 = 1;
 	std::cout << "The vector " << (numbers.Contains(value1) ? "contains " : "does not contain ") << value1 << std::endl;
@@ -94,6 +102,10 @@ void TestVector()
 	std::cout << "The vector " << (numbers.Contains(value2) ? "contains " : "does not contain ") << value2 << std::endl;
 	std::cout << "Value " << value2 << " is first found at element " << numbers.Find(value2) << std::endl;
 	std::cout << std::endl;
+
+	// Resize the vector to 5 elements.
+	numbers.Resize(5);
+	PrintVector(numbers);
 
 	// Clear the vector.
 	numbers.Clear();
@@ -128,6 +140,11 @@ void PrintLinkedList(LinkedList<int>& linkedList)
 	{
 		std::cout << "Head: " << linkedList.GetHead() << std::endl;
 		std::cout << "Tail: " << linkedList.GetTail() << std::endl;
+	}
+	else
+	{
+		std::cout << "Head: null" << std::endl;
+		std::cout << "Tail: null" << std::endl;
 	}
 
 	std::cout << std::endl;
@@ -207,7 +224,15 @@ void TestLinkedList()
 
 int main()
 {	
-	// TestVector();
+	// Test vector.
+	{
+		TestVector();
+	}
+	std::cin.get();
 
-	TestLinkedList();
+	// Test linked list.
+	{
+		TestLinkedList();
+	}
+	std::cin.get();
 }

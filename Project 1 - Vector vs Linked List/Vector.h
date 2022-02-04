@@ -1,3 +1,6 @@
+// Vector.h
+// Programmer: Khoi Ho
+
 #pragma once
 
 #include <stdexcept>
@@ -25,10 +28,10 @@ public:
 	void PushBack(T newElement);
 
 	// Return a reference to the element at the given index
-	T& operator[](int index);
+	T& operator[](const int& index);
 
 	// Return a reference to the element at the given index
-	T& At(int index);
+	T& At(const int& index);
 
 	// Remove all elements from the list
 	void Clear();
@@ -37,7 +40,7 @@ public:
 	int Size() const;
 
 	// Allocates room for at least this many values. Does not shrink the storage
-	void Reserve(int capacity);
+	void Reserve(const int& capacity);
 
 	// Returns the amount of allocated space
 	int GetCapacity() const;
@@ -46,7 +49,7 @@ public:
 	void EraseAt(const int& index);
 
 	// Removes one value from the container: the first that matches
-    void Erase(T value);
+    void Erase(const T& value);
 
 	// Returns the index of the given value, -1 if not found
 	int Find(const T& value) const;
@@ -55,16 +58,14 @@ public:
 	bool Contains(const T& value) const;
 
 	// Insert the given element at the given position. Position 0 should insert the element at the beginning of the container.
-	void Insert(T element, const int& index);
+	void Insert(const T& element, const int& index);
 
 	// Adds or removes elements from the end of the container to achieve the given new size
-	void Resize(int newSize);
+	void Resize(const int& newSize);
 };
 
 template<class T>
-inline Vector<T>::Vector() : arr(new T[1]), capacity(1), size(0)
-{
-}
+inline Vector<T>::Vector() : arr(new T[1]), capacity(1), size(0) {}
 
 template<class T>
 inline Vector<T>::~Vector()
@@ -73,7 +74,7 @@ inline Vector<T>::~Vector()
 }
 
 template<class T>
-void Vector<T>::PushFront(T newElement)
+inline void Vector<T>::PushFront(T newElement)
 {
 	// If the current size reaches the capacity, allocate more memory.
 	if (size == capacity)
@@ -94,7 +95,7 @@ void Vector<T>::PushFront(T newElement)
 }
 
 template<class T>
-void Vector<T>::PushBack(T newElement)
+inline void Vector<T>::PushBack(T newElement)
 {
 	// If the current size reaches the capacity, allocate more memory.
 	if (size == capacity)
@@ -109,21 +110,21 @@ void Vector<T>::PushBack(T newElement)
 }
 
 template<class T>
-inline T& Vector<T>::operator[](int index)
+inline T& Vector<T>::operator[](const int& index)
 {
 	return At(index);
 }
 
 template<class T>
-inline T& Vector<T>::At(int index)
+inline T& Vector<T>::At(const int& index)
 {
 	if (index < 0)
 	{
-		throw std::invalid_argument("The index is cannot be negative.");
+		throw std::invalid_argument("The index must be negative.");
 	}
 	else if (index >= size)
 	{
-		throw std::invalid_argument("The index cannot exceed the size of the vector.");
+		throw std::invalid_argument("The index must not exceed the size of the vector.");
 	}
 
 	return arr[index];
@@ -142,7 +143,7 @@ inline int Vector<T>::Size() const
 }
 
 template<class T>
-void Vector<T>::Reserve(int newCapacity)
+inline void Vector<T>::Reserve(const int& newCapacity)
 {
 	// Cannot reserve if the capacity is not a positive number.
 	if (newCapacity <= 0)
@@ -180,7 +181,7 @@ inline int Vector<T>::GetCapacity() const
 }
 
 template<class T>
-void Vector<T>::EraseAt(const int& index)
+inline void Vector<T>::EraseAt(const int& index)
 {
 	// Cannot erase the element if the index is less than 0.
 	if (index < 0)
@@ -204,7 +205,7 @@ void Vector<T>::EraseAt(const int& index)
 }
 
 template<class T>
-void Vector<T>::Erase(T value)
+inline void Vector<T>::Erase(const T& value)
 {
 	for (int i = 0; i < size; ++i)
 	{
@@ -217,7 +218,7 @@ void Vector<T>::Erase(T value)
 }
 
 template<class T>
-int Vector<T>::Find(const T& value) const
+inline int Vector<T>::Find(const T& value) const
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -231,7 +232,7 @@ int Vector<T>::Find(const T& value) const
 }
 
 template<class T>
-bool Vector<T>::Contains(const T& value) const
+inline bool Vector<T>::Contains(const T& value) const
 {
 	for (int i = 0; i < size; i++)
 	{
@@ -245,7 +246,7 @@ bool Vector<T>::Contains(const T& value) const
 }
 
 template<class T>
-void Vector<T>::Insert(T element, const int& index)
+inline void Vector<T>::Insert(const T& element, const int& index)
 {
 	// Cannot insert the new element to the vector if the index is negative.
 	if (index < 0)
@@ -295,7 +296,7 @@ void Vector<T>::Insert(T element, const int& index)
 }
 
 template<class T>
-void Vector<T>::Resize(int newSize)
+inline void Vector<T>::Resize(const int& newSize)
 {
 	// Cannot resize the vector if the new size is negative.
 	if (newSize < 0)

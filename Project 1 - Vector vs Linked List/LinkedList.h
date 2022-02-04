@@ -1,3 +1,6 @@
+// LinkedList.h
+// Programmer: Khoi Ho
+
 #pragma once
 
 #include <stdexcept>
@@ -13,9 +16,7 @@ public:
 };
 
 template<class T>
-inline Node<T>::Node(T aValue, Node<T>* aNext) : value(aValue), next(aNext)
-{
-}
+inline Node<T>::Node(T aValue, Node<T>* aNext) : value(aValue), next(aNext) {}
 
 template<class T>
 class LinkedList
@@ -69,7 +70,7 @@ public:
 	bool Contains(const T& value);
 
 	// Insert the given element at the given position. Position 0 should insert the element at the beginning of the container
-	void Insert(T value, const int& index);
+	void Insert(const T& value, const int& index);
 };
 
 template<class T>
@@ -98,11 +99,14 @@ inline LinkedList<T>::~LinkedList()
 template<class T>
 inline void LinkedList<T>::PushFront(T value)
 {
+	// Case 1: The linked list is empty.
 	if (head == nullptr)
 	{
 		head = new Node<T>(value, nullptr);
 		tail = head;
 	}
+
+	// Case 2: The linked list is not empty.
 	else
 	{
 		head = new Node<T>(value, head);
@@ -114,11 +118,14 @@ inline void LinkedList<T>::PushFront(T value)
 template<class T>
 inline void LinkedList<T>::PushBack(T value)
 {
+	// Case 1: The linked list is empty.
 	if (head == nullptr)
 	{
 		head = new Node<T>(value, nullptr);
 		tail = head;
 	}
+
+	// Case 2: The linked list is not empty.
 	else
 	{
 		Node<T>* newNode = new Node<T>(value);
@@ -196,7 +203,6 @@ inline void LinkedList<T>::Clear()
 			Node<T>* previousNode = currentNode;
 			currentNode = currentNode->next;
 			delete(previousNode);
-			//--size;
 		}
 
 		delete currentNode;
@@ -219,7 +225,12 @@ inline void LinkedList<T>::EraseAt(const int& index)
 {
 	if (index < 0)
 	{
-		throw std::invalid_argument("The index must not be negative");
+		throw std::invalid_argument("The index must not be negative.");
+	}
+
+	if (index >= size)
+	{
+		throw std::invalid_argument("The index exceeds the size of the linked list.");
 	}
 
 	if (head == nullptr)
@@ -265,10 +276,6 @@ inline void LinkedList<T>::EraseAt(const int& index)
 			delete(currentNode);
 
 			--size;
-		}
-		else
-		{
-			throw std::invalid_argument("The index exceeds the size of the linked list.");
 		}
 	}
 }
@@ -318,10 +325,6 @@ inline void LinkedList<T>::Erase(const T& value)
 
 			--size;
 		}
-		else
-		{
-			throw std::invalid_argument("The index exceeds the size of the linked list.");
-		}
 	}
 }
 
@@ -334,17 +337,20 @@ inline int LinkedList<T>::Find(const T& value)
 	Node<T>* currentNode = head;
 	int currentIndex = 0;
 
+	// Keep traversing until the element is found or the last element is reached.
 	while (currentNode!= nullptr && currentNode->value != value)
 	{
 		currentNode = currentNode->next;
 		currentIndex++;
 	}
 
+	// If the element is found, return the index of that element.
 	if (currentNode != nullptr && currentNode->value == value)
 	{
 		return currentIndex;
 	}
 
+	// Return -1 if the element cannot be found.
 	return -1;
 }
 
@@ -355,7 +361,7 @@ inline bool LinkedList<T>::Contains(const T& value)
 
 	while (currentNode != nullptr)
 	{
-		// IF the current node matches the value, return true.
+		// If the current node matches the value, return true.
 		if (currentNode->value == value)
 		{
 			return true;
@@ -370,7 +376,7 @@ inline bool LinkedList<T>::Contains(const T& value)
 }
 
 template<class T>
-inline void LinkedList<T>::Insert(T value, const int& index)
+inline void LinkedList<T>::Insert(const T& value, const int& index)
 {
 	if (index < 0)
 	{
