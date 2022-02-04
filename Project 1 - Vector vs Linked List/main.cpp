@@ -168,6 +168,12 @@ void TestLinkedList()
 	linkedList.PushFront(4);
 	PrintLinkedList(linkedList);
 
+	// Change the value of some elements.
+	linkedList[0] = 12;
+	linkedList[3] = 27;
+	linkedList.At(4) = 36;
+	PrintLinkedList(linkedList);
+	
 	// Remove the head.
 	linkedList.EraseAt(0);
 	PrintLinkedList(linkedList);
