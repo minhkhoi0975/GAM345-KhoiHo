@@ -22,10 +22,10 @@ public:
 	~Vector();
 
 	// Adds a single value to beginning of the container
-	void PushFront(T newElement);
+	void PushFront(const T& newElement);
 
 	// Adds a single value to end of the container
-	void PushBack(T newElement);
+	void PushBack(const T& newElement);
 
 	// Return a reference to the element at the given index
 	T& operator[](const int& index);
@@ -74,7 +74,7 @@ inline Vector<T>::~Vector()
 }
 
 template<class T>
-inline void Vector<T>::PushFront(T newElement)
+inline void Vector<T>::PushFront(const T& newElement)
 {
 	// If the current size reaches the capacity, allocate more memory.
 	if (size == capacity)
@@ -95,7 +95,7 @@ inline void Vector<T>::PushFront(T newElement)
 }
 
 template<class T>
-inline void Vector<T>::PushBack(T newElement)
+inline void Vector<T>::PushBack(const T& newElement)
 {
 	// If the current size reaches the capacity, allocate more memory.
 	if (size == capacity)

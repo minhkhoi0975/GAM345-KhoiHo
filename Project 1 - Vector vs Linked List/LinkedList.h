@@ -12,11 +12,11 @@ public:
 	T value;
 	Node<T>* next;
 
-	Node(T aValue, Node<T>* aNext = nullptr);
+	Node(const T& aValue, Node<T>* aNext = nullptr);
 };
 
 template<class T>
-inline Node<T>::Node(T aValue, Node<T>* aNext) : value(aValue), next(aNext) {}
+inline Node<T>::Node(const T& aValue, Node<T>* aNext) : value(aValue), next(aNext) {}
 
 template<class T>
 class LinkedList
@@ -34,10 +34,10 @@ public:
 	~LinkedList();
 
 	// Adds a single value to beginning of the container
-	void PushFront(T value);
+	void PushFront(const T& value);
 
 	// Adds a single value to end of the container
-	void PushBack(T value);
+	void PushBack(const T& value);
 
 	// Returns a reference to the element at the given index
 	T& operator[](const int& index);
@@ -97,7 +97,7 @@ inline LinkedList<T>::~LinkedList()
 }
 
 template<class T>
-inline void LinkedList<T>::PushFront(T value)
+inline void LinkedList<T>::PushFront(const T& value)
 {
 	// Case 1: The linked list is empty.
 	if (head == nullptr)
@@ -116,7 +116,7 @@ inline void LinkedList<T>::PushFront(T value)
 }
 
 template<class T>
-inline void LinkedList<T>::PushBack(T value)
+inline void LinkedList<T>::PushBack(const T& value)
 {
 	// Case 1: The linked list is empty.
 	if (head == nullptr)
@@ -145,37 +145,29 @@ inline T& LinkedList<T>::operator[](const int& index)
 template<class T>
 inline T& LinkedList<T>::At(const int& index)
 {
-	if (head == nullptr)
-	{
-		throw std::invalid_argument("The linked list contains no element.");
-	}
+	if (index < 0)
+		throw std::invalid_argument("The index must not be negative.");
+
+	if (index >= size)
+		throw std::invalid_argument("The index must not exceed the size of the linked list.");
 
 	Node<T>* currentNode = head;
 	int currentIndex = 0;
 	
-	while (currentIndex != index && currentNode != nullptr)
+	while (currentIndex != index)
 	{
 		currentIndex++;
 		currentNode = currentNode->next;
 	}
 
-	if (currentIndex == index && currentNode != nullptr)
-	{
-		return currentNode->value;
-	}
-	else
-	{
-		throw std::invalid_argument("The index exceeds the size of the linked list.");
-	}
+	return currentNode->value;
 }
 
 template<class T>
 inline T& LinkedList<T>::GetHead()
 {
 	if (head == nullptr)
-	{
 		throw std::exception("Cannot get the head since the linked list is empty.");
-	}
 
 	return head->value;
 }
@@ -184,9 +176,7 @@ template<class T>
 inline T& LinkedList<T>::GetTail()
 {
 	if (head == nullptr)
-	{
 		throw std::exception("Cannot get the tail since the linked list is empty.");
-	}
 
 	return tail->value;
 }
@@ -224,17 +214,10 @@ template<class T>
 inline void LinkedList<T>::EraseAt(const int& index)
 {
 	if (index < 0)
-	{
 		throw std::invalid_argument("The index must not be negative.");
-	}
 
 	if (index >= size)
-	{
-		throw std::invalid_argument("The index exceeds the size of the linked list.");
-	}
-
-	if (head == nullptr)
-		return;
+		throw std::invalid_argument("The index must not exceed the size of the linked list.");
 
 	// Case 1: The erased node is the head.
 	if (index == 0)
@@ -258,25 +241,22 @@ inline void LinkedList<T>::EraseAt(const int& index)
 		Node<T>* currentNode = head->next;	
 		int currentIndex = 1;
 
-		while (currentNode != nullptr && currentIndex != index)
+		while (currentIndex != index)
 		{	
 			previousNode = currentNode;
 			currentNode = currentNode->next;
 			currentIndex++;
 		}
 
-		if (currentNode != nullptr && currentIndex == index)
+		if (currentNode == tail)
 		{
-			if (currentNode == tail)
-			{
-				tail = nullptr;
-			}
-
-			previousNode->next = currentNode->next;
-			delete(currentNode);
-
-			--size;
+			tail = nullptr;
 		}
+
+		previousNode->next = currentNode->next;
+		delete(currentNode);
+
+		--size;
 	}
 }
 
@@ -313,7 +293,7 @@ inline void LinkedList<T>::Erase(const T& value)
 			currentNode = currentNode->next;
 		}
 
-		if (currentNode != nullptr && currentNode->value == value)
+		if (currentNode != nullptr)
 		{
 			if (currentNode == tail)
 			{
@@ -345,7 +325,7 @@ inline int LinkedList<T>::Find(const T& value)
 	}
 
 	// If the element is found, return the index of that element.
-	if (currentNode != nullptr && currentNode->value == value)
+	if (currentNode != nullptr)
 	{
 		return currentIndex;
 	}
@@ -379,9 +359,7 @@ template<class T>
 inline void LinkedList<T>::Insert(const T& value, const int& index)
 {
 	if (index < 0)
-	{
 		throw std::invalid_argument("The index must not be negative.");
-	}
 
 	// Case 1: The element is inserted at the head of the linked list.
 	else if (index == 0)
