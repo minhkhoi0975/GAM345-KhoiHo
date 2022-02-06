@@ -119,13 +119,9 @@ template<class T>
 inline T& Vector<T>::At(const int& index)
 {
 	if (index < 0)
-	{
-		throw std::invalid_argument("The index must be negative.");
-	}
+		throw std::invalid_argument("The index must not be negative.");
 	else if (index >= size)
-	{
 		throw std::invalid_argument("The index must not exceed the size of the vector.");
-	}
 
 	return arr[index];
 }
@@ -146,10 +142,8 @@ template<class T>
 inline void Vector<T>::Reserve(const int& newCapacity)
 {
 	// Cannot reserve if the capacity is not a positive number.
-	if (newCapacity <= 0)
-	{
-		throw std::invalid_argument("The capacity must be a positive number.");
-	}
+	if (newCapacity < 0)
+		throw std::invalid_argument("The capacity must not be negative.");
 
 	// Only reserve if the new capacity is greater than the current capacity.
 	if (newCapacity > capacity)
@@ -185,15 +179,11 @@ inline void Vector<T>::EraseAt(const int& index)
 {
 	// Cannot erase the element if the index is less than 0.
 	if (index < 0)
-	{
 		throw std::invalid_argument("The index must not be negative.");
-	}
 
 	// Cannot erase the element if the index exceeds the size of the vector.
 	if (index >= size)
-	{
 		throw std::invalid_argument("The index must not exceed the size of the vector.");
-	}
 
 	// Starting from the element right after the removed element, move the values to the left.
 	for (int i = index; i < size; ++i)
@@ -250,9 +240,7 @@ inline void Vector<T>::Insert(const T& element, const int& index)
 {
 	// Cannot insert the new element to the vector if the index is negative.
 	if (index < 0)
-	{
 		throw std::invalid_argument("The index must not be negative.");
-	}
 
 	// Case 1: The index is 0. 
 	else if (index == 0)
@@ -300,15 +288,11 @@ inline void Vector<T>::Resize(const int& newSize)
 {
 	// Cannot resize the vector if the new size is negative.
 	if (newSize < 0)
-	{
 		throw std::invalid_argument("The size must not be negative.");
-	}
 
 	// The function does nothing if the size remains unchanged.
 	if (newSize == size)
-	{
 		return;
-	}
 
 	// If the new size is lower than the current size, simply change size.
 	else if (newSize < size)

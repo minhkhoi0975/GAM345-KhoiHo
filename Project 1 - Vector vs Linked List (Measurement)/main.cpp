@@ -72,6 +72,14 @@ void TestGeneratingVectorAndLinkedList(Vector<int>& vector, LinkedList<int>& lin
 	PrintLinkedList(linkedList);
 }
 
+void TestRandomNumber(Random& random)
+{
+	for (int i = 0; i < 100; i++)
+	{
+		std::cout << random.Integer(0, 100) << std::endl;
+	}
+}
+
 // Generate the data file for the At() function.
 bool GenerateDataAt(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
 {
@@ -618,32 +626,34 @@ bool GenerateScriptInsert(const std::string& scriptFileName, const std::string& 
 int main()
 {	
 	Random random;
+	int minN = 50;
+	int maxN = 1000;
 
-	GenerateDataAt("data_at.txt", 50, 1000, random);	
+	GenerateDataAt("data_at.txt", minN, maxN, random);	
 	GenerateScriptAt("script_at.txt", "data_at.txt", "image_at.png");
 	system("gnuplot.exe script_at.txt");
 	
-	GenerateDataPushFront("data_push_front.txt", 50, 1000, random);
+	GenerateDataPushFront("data_push_front.txt", minN, maxN, random);
 	GenerateScriptPushFront("script_push_front.txt", "data_push_front.txt", "image_push_front.png");
 	system("gnuplot.exe script_push_front.txt");
 		
-	GenerateDataPushBack("data_push_back.txt", 50, 1000, random);
+	GenerateDataPushBack("data_push_back.txt", minN, maxN, random);
 	GenerateScriptPushBack("script_push_back.txt", "data_push_back.txt", "image_push_back.png");
 	system("gnuplot.exe script_push_back.txt");
 
-	GenerateDataEraseAt("data_erase_at.txt", 50, 1000, random);
+	GenerateDataEraseAt("data_erase_at.txt", minN, maxN, random);
 	GenerateScriptEraseAt("script_erase_at.txt", "data_erase_at.txt", "image_erase_at.png");
 	system("gnuplot.exe script_erase_at.txt");
 	
-	GenerateDataFind("data_find.txt", 50, 1000, random);
+	GenerateDataFind("data_find.txt", minN, maxN, random);
 	GenerateScriptFind("script_find.txt", "data_find.txt", "image_find.png");
 	system("gnuplot.exe script_find.txt");
 
-	GenerateDataContains("data_contains.txt", 50, 1000, random);
+	GenerateDataContains("data_contains.txt", minN, maxN, random);
 	GenerateScriptContains("script_contains.txt", "data_contains.txt", "image_contains.png");
 	system("gnuplot.exe script_contains.txt");
 
-	GenerateDataInsert("data_insert.txt", 50, 1000, random);
+	GenerateDataInsert("data_insert.txt", minN, maxN, random);
 	GenerateScriptInsert("script_insert.txt", "data_insert.txt", "image_insert.png");
 	system("gnuplot.exe script_insert.txt");
 }
