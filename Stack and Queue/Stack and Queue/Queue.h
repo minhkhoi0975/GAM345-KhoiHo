@@ -1,4 +1,4 @@
-// Stack.h
+// Queue.h
 // Programmer: Khoi Ho
 
 #pragma once
@@ -6,13 +6,13 @@
 #include "LinkedList.h"
 
 template <class T>
-class Stack: protected LinkedList<T>
+class Queue : protected LinkedList<T>
 {
 public:
 	// Default constructor
-	Stack();
+	Queue();
 
-	// Adds a single value to the end of the container.
+	// Adds a single value to the beginning of the container.
 	void Push(const T& value);
 
 	// Removes the value at the beginning of the container and returns its value.
@@ -26,30 +26,30 @@ public:
 };
 
 template<class T>
-inline Stack<T>::Stack() : LinkedList<T>()
+inline Queue<T>::Queue() : LinkedList<T>()
 {
 }
 
 template<class T>
-inline void Stack<T>::Push(const T& value)
+inline void Queue<T>::Push(const T& value)
 {
-	LinkedList<T>::PushFront(value);
+	LinkedList<T>::PushBack(value);
 }
 
 template<class T>
-inline T Stack<T>::Pop()
+inline T Queue<T>::Pop()
 {
 	return LinkedList<T>::PopFront();
 }
 
 template<class T>
-inline void Stack<T>::Clear()
+inline void Queue<T>::Clear()
 {
 	LinkedList<T>::Clear();
 }
 
 template<class T>
-inline int Stack<T>::Size()
+inline int Queue<T>::Size()
 {
 	return LinkedList<T>::Size();
 }
