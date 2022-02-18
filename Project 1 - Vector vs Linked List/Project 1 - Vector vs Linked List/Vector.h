@@ -18,8 +18,14 @@ public:
 	// Default constructor.
 	Vector();
 
+	// Copy constructor.
+	Vector(const Vector& other);
+
 	// Deallocates any memory the container needed to allocate
 	~Vector();
+
+	// Assignment operator.
+	Vector<T>& operator=(const Vector& other);
 
 	// Adds a single value to beginning of the container
 	void PushFront(const T& newElement);
@@ -68,9 +74,39 @@ template<class T>
 inline Vector<T>::Vector() : arr(new T[1]), capacity(1), size(0) {}
 
 template<class T>
+inline Vector<T>::Vector(const Vector& other) : arr(new T[other.capacity]), capacity(other.capacity), size(other.size)
+{
+	// Copy the elements from the other array.
+	for (int i = 0; i < size; i++)
+	{
+		arr[i] = other.arr[i];
+	}
+}
+
+template<class T>
 inline Vector<T>::~Vector()
 {
 	delete[] arr;
+}
+
+template<class T>
+inline Vector<T>& Vector<T>::operator=(const Vector& other)
+{
+	// Destroy the old array.
+	delete arr;
+
+	// Create a new array.
+	arr = new T[other.capacity];
+    capacity = other.capacity;
+	size = other.size;
+
+	// Copy the elements from the other array.
+	for (int i = 0; i < size; i++)
+	{
+		arr[i] = other.arr[i];
+	}
+
+	return *this;
 }
 
 template<class T>

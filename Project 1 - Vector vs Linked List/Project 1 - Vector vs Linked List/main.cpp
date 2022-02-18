@@ -2,7 +2,8 @@
 #include "Vector.h"
 #include "LinkedList.h"
 
-void PrintVector(Vector<int>& vector)
+template<class T>
+void PrintVector(Vector<T>& vector)
 {
 	std::cout << std::endl;
 
@@ -28,6 +29,58 @@ void PrintVector(Vector<int>& vector)
 	std::cout << "Capacity: " << vector.GetCapacity() << std::endl;
 
 	std::cout << std::endl;
+}
+
+void TestVectorRAII()
+{
+	// Create an object.
+	Vector<int> vector1;
+	vector1.PushBack(5);
+	vector1.PushBack(6);
+	vector1.PushBack(2);
+	vector1.PushBack(7);
+	vector1.PushBack(3);
+	PrintVector(vector1);
+
+	// Create a new object using copy constructor.
+	{
+		Vector<int> vector2(vector1);
+		PrintVector(vector2);
+
+		// Make changes in vector2 to check if vector1 is affected.
+		vector2.PushBack(5);
+		vector2.PushBack(4);
+		vector2.PushBack(4);
+		vector2.PushBack(1);
+
+		PrintVector(vector2);
+		PrintVector(vector1);
+	}
+
+	// Create a new object using assignment operator.
+	{
+		Vector<int> vector3 = vector1;
+		PrintVector(vector3);
+
+		// Make changes in vector3 to check if vector1 is affected.
+		vector3.PushBack(2);
+		vector3.PushBack(9);
+		vector3.PushBack(9);
+		vector3.PushBack(3);
+
+		PrintVector(vector3);
+		PrintVector(vector1);
+
+		// Reassign vector3.
+		vector3 = vector1;
+		vector3.PushBack(2);
+		vector3.PushBack(2);
+		vector3.PushBack(4);
+		vector3.PushBack(1);
+
+		PrintVector(vector3);
+		PrintVector(vector1);
+	}
 }
 
 void TestVector()
@@ -112,7 +165,8 @@ void TestVector()
 	PrintVector(numbers);
 }
 
-void PrintLinkedList(LinkedList<int>& linkedList)
+template<class T>
+void PrintLinkedList(LinkedList<T>& linkedList)
 {
 	std::cout << std::endl;
 
@@ -148,6 +202,58 @@ void PrintLinkedList(LinkedList<int>& linkedList)
 	}
 
 	std::cout << std::endl;
+}
+
+void TestLinkedListRAII()
+{
+	// Create an object.
+	LinkedList<int> linkedList1;
+	linkedList1.PushBack(5);
+	linkedList1.PushBack(6);
+	linkedList1.PushBack(2);
+	linkedList1.PushBack(7);
+	linkedList1.PushBack(3);
+	PrintLinkedList(linkedList1);
+
+	// Create a new object using copy constructor.
+	{
+		LinkedList<int> linkedList2(linkedList1);
+		PrintLinkedList(linkedList2);
+
+		// Make changes in vector2 to check if vector1 is affected.
+		linkedList2.PushBack(5);
+		linkedList2.PushBack(4);
+		linkedList2.PushBack(4);
+		linkedList2.PushBack(1);
+
+		PrintLinkedList(linkedList2);
+		PrintLinkedList(linkedList1);
+	}
+
+	// Create a new object using assignment operator.
+	{
+		LinkedList<int> linkedList3 = linkedList1;
+		PrintLinkedList(linkedList3);
+
+		// Make changes in vector3 to check if vector1 is affected.
+		linkedList3.PushBack(2);
+		linkedList3.PushBack(9);
+		linkedList3.PushBack(9);
+		linkedList3.PushBack(3);
+
+		PrintLinkedList(linkedList3);
+		PrintLinkedList(linkedList1);
+
+		// Reassign vector3.
+		linkedList3 = linkedList1;
+		linkedList3.PushBack(2);
+		linkedList3.PushBack(2);
+		linkedList3.PushBack(4);
+		linkedList3.PushBack(1);
+
+		PrintLinkedList(linkedList3);
+		PrintLinkedList(linkedList1);
+	}
 }
 
 void TestLinkedList()
@@ -230,15 +336,33 @@ void TestLinkedList()
 
 int main()
 {	
+	/*
+	// Test vector RAII.
+	{
+		TestVectorRAII();
+	}
+	std::cin.get();
+	*/
+
+	/*
 	// Test vector.
 	{
 		TestVector();
 	}
 	std::cin.get();
+	*/
 
+	// Test linked list RAII.
+	{
+		TestLinkedListRAII();
+	}
+	std::cin.get();
+
+	/*
 	// Test linked list.
 	{
 		TestLinkedList();
 	}
 	std::cin.get();
+	*/
 }

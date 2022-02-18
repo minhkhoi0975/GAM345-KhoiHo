@@ -30,8 +30,14 @@ public:
 	// Default constructor
 	LinkedList();
 
+	// Copy constructor
+	LinkedList(const LinkedList<T>& other);
+
 	// Deallocates any memory the container needed to allocate
 	~LinkedList();
+
+	// Assignment operator overload.
+	LinkedList<T>& operator=(const LinkedList<T>& other);
 
 	// Adds a single value to beginning of the container
 	void PushFront(const T& value);
@@ -79,6 +85,43 @@ inline LinkedList<T>::LinkedList()
 }
 
 template<class T>
+inline LinkedList<T>::LinkedList(const LinkedList<T>& other): size(other.size)
+{
+	// Case 1: The other linked list has no element.
+	if (size == 0)
+	{
+		head = nullptr;
+		tail = nullptr;
+	}
+
+	// Case 2: The other linked list has only 1 element.
+	else if (size == 1)
+	{
+		head = new Node<T>(other.head->value);
+		tail = head;
+	}
+
+	// Case 3: The other linked list has at least 2 elements.
+	else
+	{
+		head = new Node<T>(other.head->value);
+
+		Node<T>* currentNode = head;
+		Node<T>* nextNodeOther = other.head->next;
+
+		while (nextNodeOther != nullptr)
+		{
+			currentNode->next = new Node<T>(nextNodeOther->value);
+			currentNode = currentNode->next;
+
+			nextNodeOther = nextNodeOther->next;
+		}
+
+		tail = currentNode;
+	}
+}
+
+template<class T>
 inline LinkedList<T>::~LinkedList()
 {
 	if (head != nullptr)
@@ -94,6 +137,51 @@ inline LinkedList<T>::~LinkedList()
 
 		delete currentNode;
 	}
+}
+
+template<class T>
+inline LinkedList<T>& LinkedList<T>::operator=(const LinkedList<T>& other)
+{
+	// Clear the linked list.
+	Clear();
+
+	// Copy the elements from the other linked list.
+	size = other.size;
+
+	// Case 1: The other linked list has no element.
+	if (size == 0)
+	{
+		head = nullptr;
+		tail = nullptr;
+	}
+
+	// Case 2: The other linked list has only 1 element.
+	else if (size == 1)
+	{
+		head = new Node<T>(other.head->value);
+		tail = head;
+	}
+
+	// Case 3: The other linked list has at least 2 elements.
+	else
+	{
+		head = new Node<T>(other.head->value);
+
+		Node<T>* currentNode = head;
+		Node<T>* nextNodeOther = other.head->next;
+
+		while (nextNodeOther != nullptr)
+		{
+			currentNode->next = new Node<T>(nextNodeOther->value);
+			currentNode = currentNode->next;
+
+			nextNodeOther = nextNodeOther->next;
+		}
+
+		tail = currentNode;
+	}
+
+	return *this;
 }
 
 template<class T>
