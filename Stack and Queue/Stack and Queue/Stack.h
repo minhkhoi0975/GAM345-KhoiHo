@@ -12,6 +12,9 @@ public:
 	// Default constructor
 	Stack();
 
+	// Copy constructor
+	Stack(const Stack<T>& other);
+
 	// Adds a single value to the end of the container.
 	void Push(const T& value);
 
@@ -27,6 +30,11 @@ public:
 
 template<class T>
 inline Stack<T>::Stack() : LinkedList<T>()
+{
+}
+
+template<class T>
+inline Stack<T>::Stack(const Stack<T>& other) : LinkedList<T>(other)
 {
 }
 

@@ -12,6 +12,9 @@ public:
 	// Default constructor
 	Queue();
 
+	// Copy constructor
+	Queue(const Queue<T>& other);
+
 	// Adds a single value to the beginning of the container.
 	void Push(const T& value);
 
@@ -27,6 +30,11 @@ public:
 
 template<class T>
 inline Queue<T>::Queue() : LinkedList<T>()
+{
+}
+
+template<class T>
+inline Queue<T>::Queue(const Queue<T>& other) : LinkedList<T>(other)
 {
 }
 
