@@ -127,6 +127,43 @@ void TestLinkedListPushAndPop()
 	}
 }
 
+void TestStackRAII()
+{
+	Stack<int> stack1;
+	stack1.Push(7);
+	stack1.Push(4);
+	stack1.Push(9);
+	stack1.Push(9);
+	stack1.Push(2);
+
+	{
+		Stack<int> stack2(stack1);
+
+		while (stack2.Size() > 0)
+		{
+			std::cout << stack2.Pop() << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	{
+		Stack<int> stack3 = stack1;
+
+		while (stack3.Size() > 0)
+		{
+			std::cout << stack3.Pop() << std::endl;
+		}
+		std::cout << std::endl;
+
+		stack3 = stack1;
+		while (stack3.Size() > 0)
+		{
+			std::cout << stack3.Pop() << std::endl;
+		}
+		std::cout << std::endl;
+	}
+}
+
 void TestStack()
 {
 	// Test integer stack.
@@ -212,6 +249,43 @@ void TestStack()
 		// Print out the size of the queue.
 		std::cout << "Current size: " << stack4.Size() << std::endl;
 
+		std::cout << std::endl;
+	}
+}
+
+void TestQueueRAII()
+{
+	Queue<int> queue1;
+	queue1.Push(7);
+	queue1.Push(4);
+	queue1.Push(9);
+	queue1.Push(9);
+	queue1.Push(2);
+
+	{
+		Queue<int> queue2(queue1);
+
+		while (queue2.Size() > 0)
+		{
+			std::cout << queue2.Pop() << std::endl;
+		}
+		std::cout << std::endl;
+	}
+
+	{
+		Queue<int> queue3 = queue1;
+
+		while (queue3.Size() > 0)
+		{
+			std::cout << queue3.Pop() << std::endl;
+		}
+		std::cout << std::endl;
+
+		queue3 = queue1;
+		while (queue3.Size() > 0)
+		{
+			std::cout << queue3.Pop() << std::endl;
+		}
 		std::cout << std::endl;
 	}
 }
@@ -308,6 +382,8 @@ void TestQueue()
 int main()
 {
 	// TestLinkedListPushAndPop();
-	TestStack();
+	//TestStackRAII();
+	TestQueueRAII();
+	// TestStack();
 	// TestQueue();
 }
