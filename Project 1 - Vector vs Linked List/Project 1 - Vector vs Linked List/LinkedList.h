@@ -45,6 +45,12 @@ public:
 	// Adds a single value to end of the container
 	void PushBack(const T& value);
 
+	// Remove a value at the beginning of the container.
+	T PopFront();
+
+	// Remove a value at the end of the container.
+	T PopBack();
+
 	// Returns a reference to the element at the given index
 	T& operator[](const int& index);
 
@@ -85,7 +91,7 @@ inline LinkedList<T>::LinkedList()
 }
 
 template<class T>
-inline LinkedList<T>::LinkedList(const LinkedList<T>& other): size(other.size)
+inline LinkedList<T>::LinkedList(const LinkedList<T>& other) : size(other.size)
 {
 	// Case 1: The other linked list has no element.
 	if (size == 0)
@@ -222,6 +228,95 @@ inline void LinkedList<T>::PushBack(const T& value)
 	}
 
 	size++;
+}
+
+template<class T>
+inline T LinkedList<T>::PopFront()
+{
+	// Case 1: The linked list has no node.
+	if (size == 0)
+	{
+		throw std::exception("The container is empty.");
+	}
+
+	// Case 2: The linked list has at least 1 node.
+	else
+	{
+		// Get the removed value.
+		Node<T>* removedNode = head;
+		T removedValue(removedNode->value);
+
+		// Make the head pointer point to the new head.
+		head = head->next;
+
+		// If the linked list has only 1 node, then the tail is null.
+		if (size == 1)
+		{
+			tail = nullptr;
+		}
+
+		// Delete the removed node.
+		delete removedNode;
+
+		// Reduce the size of the linked list.
+		size--;
+
+		// Return the removed value.
+		return removedValue;
+	}
+}
+
+template<class T>
+inline T LinkedList<T>::PopBack()
+{
+	// Case 1: The linked list has no node.
+	if (size == 0)
+	{
+		throw std::exception("The container is empty.");
+	}
+
+	// Case 2: The linked list has only 1 node.
+	else if (size == 1)
+	{
+		// Get the removed value.
+		T removedValue(tail->value);
+
+		// Destroy the head/tail.
+		delete head;
+		head = nullptr;
+		tail = nullptr;
+		size = 0;
+
+		// Return the removed value.
+		return removedValue;
+	}
+
+	// Case 3: The linked list has at least 2 nodes.
+	else
+	{
+		Node<T>* previousNode = head;
+		Node<T>* currentNode = head->next;
+
+		while (currentNode != tail)
+		{
+			previousNode = currentNode;
+			currentNode = currentNode->next;
+		}
+
+		// Get the removed value.
+		T removedValue(tail->value);
+
+		// Destroy the tail.
+		delete tail;
+
+		// The node before the previous tail is the new tail.
+		tail = previousNode;
+
+		--size;
+
+		// Return the removed value.
+		return removedValue;
+	}
 }
 
 template<class T>
