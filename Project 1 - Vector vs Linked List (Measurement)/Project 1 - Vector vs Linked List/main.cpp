@@ -2,26 +2,10 @@
 #include <fstream>
 #include <chrono>
 #include "Vector.h"
-#include "LinkedList.h"
 #include "Random.h"
 
-// Generate a vector and a linked list whose elements are the same.
-void GenerateVectorAndLinkedList(Vector<int>& vector, LinkedList<int>& linkedList, const int& n, Random& random)
-{
-	vector.Clear();
-	linkedList.Clear();
-
-	vector.Reserve(n);
-
-	for (int i = 0; i < n; i++)
-	{
-		int value = random.Integer(0, n-1);
-		vector.PushBack(value);
-		linkedList.PushBack(value);
-	}
-}
-
-void PrintVector(Vector<int>& vector)
+template<class T>
+void PrintVector(Vector<T>& vector)
 {
 	std::cout << "Vector's elements: ";
 	if (vector.Size() == 0)
@@ -38,622 +22,108 @@ void PrintVector(Vector<int>& vector)
 	std::cout << std::endl;
 }
 
-void PrintLinkedList(LinkedList<int>& linkedList)
+template<class T>
+void Swap(T& val1, T& val2)
 {
-	std::cout << "Linked list's elements: ";
+	T temp = val1;
+	val1 = val2;
+	val2 = temp;
+}
 
-	if (linkedList.Size() == 0)
+template<class T>
+void BubbleSort(Vector<T>& vector)
+{
+	for (int i = 0; i < vector.Size(); i++)
 	{
-		std::cout << "none";
-	}
-	else
-	{
-		for (int i = 0; i < linkedList.Size(); i++)
+		for (int j = 0; j < vector.Size() - i - 1; j++)
 		{
-			std::cout << linkedList[i] << ' ';
+			if (vector[j + 1] < vector[j])
+			{
+				Swap(vector[j], vector[j + 1]);
+			}
 		}
 	}
-	std::cout << std::endl;
 }
 
-void TestGeneratingVectorAndLinkedList(Vector<int>& vector, LinkedList<int>& linkedList, Random& random)
+template <class T>
+void InsertionSort(Vector<T>& vector)
 {
-	// Test generating a vector and a linked list.
-	GenerateVectorAndLinkedList(vector, linkedList, 10, random);
-	PrintVector(vector);
-	PrintLinkedList(linkedList);
-
-	GenerateVectorAndLinkedList(vector, linkedList, 20, random);
-	PrintVector(vector);
-	PrintLinkedList(linkedList);
-
-	GenerateVectorAndLinkedList(vector, linkedList, 30, random);
-	PrintVector(vector);
-	PrintLinkedList(linkedList);
-}
-
-void TestRandomNumber(Random& random)
-{
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < vector.Size(); i++)
 	{
-		std::cout << random.Integer(0, 100) << std::endl;
-	}
-}
-
-// Generate the data file for the At() function.
-bool GenerateDataAt(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
-{
-	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
-
-	if (!dataFile)
-		return false;
-
-	dataFile << "#n\tVector(ns)\tLinkedList(ns)" << std::endl;
-
-	for (int n = minN; n <= maxN; n++)
-	{
-		// Generate a vector and a linked list of size n.
-		Vector<int> vector;
-		LinkedList<int> linkedList;
-		GenerateVectorAndLinkedList(vector, linkedList, n, random);
-
-		// Measure the average time of the same task in each data structure.
-		long long vertexAverageTime = 0;
-		long long linkedListAverageTime = 0;
-
-		for (int i = 0; i < 100; i++)
+		for (int j = i; j > 0 && vector[j] < vector[j - 1]; j--)
 		{
-			int index = random.Integer(0, n - 1);
-
-			auto vectorStartTime = std::chrono::high_resolution_clock::now();
-			vector.At(index);
-			auto vectorEndTime = std::chrono::high_resolution_clock::now();
-			auto vertexTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(vectorEndTime - vectorStartTime).count();
-			vertexAverageTime += vertexTimeInterval;
-
-			auto linkedListStartTime = std::chrono::high_resolution_clock::now();
-			linkedList.At(index);
-			auto linkedListEndTime = std::chrono::high_resolution_clock::now();
-			auto linkedListTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(linkedListEndTime - linkedListStartTime).count();
-			linkedListAverageTime += linkedListTimeInterval;
+			Swap(vector[j], vector[j - 1]);
 		}
-
-		vertexAverageTime /= 100;
-		linkedListAverageTime /= 100;
-
-		// Write the average times to the file.
-		dataFile << n << '\t' << vertexAverageTime << '\t' << linkedListAverageTime << '\n';
 	}
-
-	dataFile.close();
-
-	return true;
 }
 
-// Generate the script file for the At() function.
-bool GenerateScriptAt(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName)
+template <class T>
+void SelectionSort(Vector<T>& vector)
 {
-	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
-
-	if (!scriptFile)
-		return false;
-
-	// Print out the parameters.
-	scriptFile
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName << "'" << std::endl
-		<< std::endl
-		<< "set title 'Average Completion Time of At() vs. Size of Data Set for Vector and LinkedList'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Vector' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Linked List' lw 1 with lines" << std::endl;
-
-	// Close the file.
-	scriptFile.close();
-
-	return true;
-}
-
-// Generate the data file for the PushFront() function.
-bool GenerateDataPushFront(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
-{
-	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
-
-	if (!dataFile)
-		return false;
-
-	dataFile << "#n\tVector(ns)\tLinkedList(ns)" << std::endl;
-
-	for (int n = minN; n <= maxN; n++)
+	for (int i = 0; i < vector.Size() - 1; i++)
 	{
-		// Generate a vector and a linked list of size n.
-		Vector<int> vector;
-		LinkedList<int> linkedList;
-		GenerateVectorAndLinkedList(vector, linkedList, n, random);
-
-		// Measure the average time of the same task in each data structure.
-		long long vertexAverageTime = 0;
-		long long linkedListAverageTime = 0;
-
-		for (int i = 0; i < 100; i++)
+		for (int j = i + 1; j < vector.Size(); j++)
 		{
-			int value = random.Integer(0, n - 1);
-
-			auto vectorStartTime = std::chrono::high_resolution_clock::now();
-			vector.PushFront(value);
-			auto vectorEndTime = std::chrono::high_resolution_clock::now();
-			auto vertexTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(vectorEndTime - vectorStartTime).count();
-			vertexAverageTime += vertexTimeInterval;
-
-			auto linkedListStartTime = std::chrono::high_resolution_clock::now();
-			linkedList.PushFront(value);
-			auto linkedListEndTime = std::chrono::high_resolution_clock::now();
-			auto linkedListTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(linkedListEndTime - linkedListStartTime).count();
-			linkedListAverageTime += linkedListTimeInterval;
+			if (vector[j] < vector[i])
+			{
+				Swap(vector[j], vector[i]);
+			}
 		}
-
-		vertexAverageTime /= 100;
-		linkedListAverageTime /= 100;
-
-		// Write the average times to the file.
-		dataFile << n << '\t' << vertexAverageTime << '\t' << linkedListAverageTime << '\n';
 	}
-
-	dataFile.close();
-
-	return true;
-}
-
-// Generate the script file for the PushFront() function.
-bool GenerateScriptPushFront(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName)
-{
-	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
-
-	if (!scriptFile)
-		return false;
-
-	// Print out the parameters.
-	scriptFile
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName << "'" << std::endl
-		<< std::endl
-		<< "set title 'Average Completion Time of PushFront() vs. Size of Data Set for Vector and LinkedList'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Vector' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Linked List' lw 1 with lines" << std::endl;
-
-	// Close the file.
-	scriptFile.close();
-
-	return true;
-}
-
-// Generate the data file for the PushFront() function.
-bool GenerateDataPushBack(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
-{
-	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
-
-	if (!dataFile)
-		return false;
-
-	dataFile << "#n\tVector(ns)\tLinkedList(ns)" << std::endl;
-
-	for (int n = minN; n <= maxN; n++)
-	{
-		// Generate a vector and a linked list of size n.
-		Vector<int> vector;
-		LinkedList<int> linkedList;
-		GenerateVectorAndLinkedList(vector, linkedList, n, random);
-
-		// Measure the average time of the same task in each data structure.
-		long long vertexAverageTime = 0;
-		long long linkedListAverageTime = 0;
-
-		for (int i = 0; i < 100; i++)
-		{
-			int value = random.Integer(0, n - 1);
-
-			auto vectorStartTime = std::chrono::high_resolution_clock::now();
-			vector.PushBack(value);
-			auto vectorEndTime = std::chrono::high_resolution_clock::now();
-			auto vertexTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(vectorEndTime - vectorStartTime).count();
-			vertexAverageTime += vertexTimeInterval;
-
-			auto linkedListStartTime = std::chrono::high_resolution_clock::now();
-			linkedList.PushBack(value);
-			auto linkedListEndTime = std::chrono::high_resolution_clock::now();
-			auto linkedListTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(linkedListEndTime - linkedListStartTime).count();
-			linkedListAverageTime += linkedListTimeInterval;
-		}
-
-		vertexAverageTime /= 100;
-		linkedListAverageTime /= 100;
-
-		// Write the average times to the file.
-		dataFile << n << '\t' << vertexAverageTime << '\t' << linkedListAverageTime << '\n';
-	}
-
-	dataFile.close();
-
-	return true;
-}
-
-// Generate the script file for the PushFront() function.
-bool GenerateScriptPushBack(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName)
-{
-	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
-
-	if (!scriptFile)
-		return false;
-
-	// Print out the parameters.
-	scriptFile
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName << "'" << std::endl
-		<< std::endl
-		<< "set title 'Average Completion Time of PushBack() vs. Size of Data Set for Vector and LinkedList'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Vector' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Linked List' lw 1 with lines" << std::endl;
-
-	// Close the file.
-	scriptFile.close();
-
-	return true;
-}
-
-// Generate the data file for the EraseAt() function.
-bool GenerateDataEraseAt(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
-{
-	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
-
-	if (!dataFile)
-		return false;
-
-	dataFile << "#n\tVector(ns)\tLinkedList(ns)" << std::endl;
-
-	for (int n = minN; n <= maxN; n++)
-	{
-		// Generate a vector and a linked list of size n.
-		Vector<int> vector;
-		LinkedList<int> linkedList;
-		GenerateVectorAndLinkedList(vector, linkedList, n, random);
-
-		// Measure the average time of the same task in each data structure.
-		long long vertexAverageTime = 0;
-		long long linkedListAverageTime = 0;
-
-		for (int i = 0; i < 100; i++)
-		{
-			if (vector.Size() == 0)
-				continue;
-
-			int index = random.Integer(0, vector.Size()- 1);
-			
-			auto vectorStartTime = std::chrono::high_resolution_clock::now();
-			vector.EraseAt(index);
-			auto vectorEndTime = std::chrono::high_resolution_clock::now();
-			auto vertexTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(vectorEndTime - vectorStartTime).count();
-			vertexAverageTime += vertexTimeInterval;
-
-			auto linkedListStartTime = std::chrono::high_resolution_clock::now();
-			linkedList.EraseAt(index);
-			auto linkedListEndTime = std::chrono::high_resolution_clock::now();
-			auto linkedListTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(linkedListEndTime - linkedListStartTime).count();
-			linkedListAverageTime += linkedListTimeInterval;
-		}
-
-		vertexAverageTime /= 100;
-		linkedListAverageTime /= 100;
-
-		// Write the average times to the file.
-		dataFile << n << '\t' << vertexAverageTime << '\t' << linkedListAverageTime << '\n';
-	}
-
-	dataFile.close();
-
-	return true;
-}
-
-// Generate the script file for the EraseAt() function.
-bool GenerateScriptEraseAt(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName)
-{
-	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
-
-	if (!scriptFile)
-		return false;
-
-	// Print out the parameters.
-	scriptFile
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName << "'" << std::endl
-		<< std::endl
-		<< "set title 'Average Completion Time of EraseAt() vs. Size of Data Set for Vector and LinkedList'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Vector' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Linked List' lw 1 with lines" << std::endl;
-
-	// Close the file.
-	scriptFile.close();
-
-	return true;
-}
-
-// Generate the data file for the Find() function.
-bool GenerateDataFind(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
-{
-	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
-
-	if (!dataFile)
-		return false;
-
-	dataFile << "#n\tVector(ns)\tLinkedList(ns)" << std::endl;
-
-	for (int n = minN; n <= maxN; n++)
-	{
-		// Generate a vector and a linked list of size n.
-		Vector<int> vector;
-		LinkedList<int> linkedList;
-		GenerateVectorAndLinkedList(vector, linkedList, n, random);
-
-		// Measure the average time of the same task in each data structure.
-		long long vertexAverageTime = 0;
-		long long linkedListAverageTime = 0;
-
-		for (int i = 0; i < 100; i++)
-		{
-			int value = random.Integer(0, n - 1);
-
-			auto vectorStartTime = std::chrono::high_resolution_clock::now();
-			vector.Find(value);
-			auto vectorEndTime = std::chrono::high_resolution_clock::now();
-			auto vertexTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(vectorEndTime - vectorStartTime).count();
-			vertexAverageTime += vertexTimeInterval;
-
-			auto linkedListStartTime = std::chrono::high_resolution_clock::now();
-			linkedList.Find(value);
-			auto linkedListEndTime = std::chrono::high_resolution_clock::now();
-			auto linkedListTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(linkedListEndTime - linkedListStartTime).count();
-			linkedListAverageTime += linkedListTimeInterval;
-		}
-
-		vertexAverageTime /= 100;
-		linkedListAverageTime /= 100;
-
-		// Write the average times to the file.
-		dataFile << n << '\t' << vertexAverageTime << '\t' << linkedListAverageTime << '\n';
-	}
-
-	dataFile.close();
-
-	return true;
-}
-
-// Generate the script file for the Find() function.
-bool GenerateScriptFind(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName)
-{
-	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
-
-	if (!scriptFile)
-		return false;
-
-	// Print out the parameters.
-	scriptFile
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName << "'" << std::endl
-		<< std::endl
-		<< "set title 'Average Completion Time of Find() vs. Size of Data Set for Vector and LinkedList'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Vector' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Linked List' lw 1 with lines" << std::endl;
-
-	// Close the file.
-	scriptFile.close();
-
-	return true;
-}
-
-// Generate the data file for the Contains() function.
-bool GenerateDataContains(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
-{
-	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
-
-	if (!dataFile)
-		return false;
-
-	dataFile << "#n\tVector(ns)\tLinkedList(ns)" << std::endl;
-
-	for (int n = minN; n <= maxN; n++)
-	{
-		// Generate a vector and a linked list of size n.
-		Vector<int> vector;
-		LinkedList<int> linkedList;
-		GenerateVectorAndLinkedList(vector, linkedList, n, random);
-
-		// Measure the average time of the same task in each data structure.
-		long long vertexAverageTime = 0;
-		long long linkedListAverageTime = 0;
-
-		for (int i = 0; i < 100; i++)
-		{
-			int value = random.Integer(0, n - 1);
-
-			auto vectorStartTime = std::chrono::high_resolution_clock::now();
-			vector.Contains(value);
-			auto vectorEndTime = std::chrono::high_resolution_clock::now();
-			auto vertexTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(vectorEndTime - vectorStartTime).count();
-			vertexAverageTime += vertexTimeInterval;
-
-			auto linkedListStartTime = std::chrono::high_resolution_clock::now();
-			linkedList.Contains(value);
-			auto linkedListEndTime = std::chrono::high_resolution_clock::now();
-			auto linkedListTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(linkedListEndTime - linkedListStartTime).count();
-			linkedListAverageTime += linkedListTimeInterval;
-		}
-
-		vertexAverageTime /= 100;
-		linkedListAverageTime /= 100;
-
-		// Write the average times to the file.
-		dataFile << n << '\t' << vertexAverageTime << '\t' << linkedListAverageTime << '\n';
-	}
-
-	dataFile.close();
-
-	return true;
-}
-
-// Generate the script file for the Contains() function.
-bool GenerateScriptContains(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName)
-{
-	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
-
-	if (!scriptFile)
-		return false;
-
-	// Print out the parameters.
-	scriptFile
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName << "'" << std::endl
-		<< std::endl
-		<< "set title 'Average Completion Time of Contains() vs. Size of Data Set for Vector and LinkedList'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Vector' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Linked List' lw 1 with lines" << std::endl;
-
-	// Close the file.
-	scriptFile.close();
-
-	return true;
-}
-
-// Generate the data file for the Insert() function.
-bool GenerateDataInsert(const std::string& dataFileName, const int& minN, const int& maxN, Random& random)
-{
-	std::fstream dataFile(dataFileName, std::ios::out | std::ios::trunc);
-
-	if (!dataFile)
-		return false;
-
-	dataFile << "#n\tVector(ns)\tLinkedList(ns)" << std::endl;
-
-	for (int n = minN; n <= maxN; n++)
-	{
-		// Generate a vector and a linked list of size n.
-		Vector<int> vector;
-		LinkedList<int> linkedList;
-		GenerateVectorAndLinkedList(vector, linkedList, n, random);
-
-		// Measure the average time of the same task in each data structure.
-		long long vertexAverageTime = 0;
-		long long linkedListAverageTime = 0;
-
-		for (int i = 0; i < 100; i++)
-		{
-			int value = random.Integer(0, n - 1);
-			int index = random.Integer(0, n - 1);
-
-			auto vectorStartTime = std::chrono::high_resolution_clock::now();
-			vector.Insert(value, index);
-			auto vectorEndTime = std::chrono::high_resolution_clock::now();
-			auto vertexTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(vectorEndTime - vectorStartTime).count();
-			vertexAverageTime += vertexTimeInterval;
-
-			auto linkedListStartTime = std::chrono::high_resolution_clock::now();
-			linkedList.Insert(value, index);
-			auto linkedListEndTime = std::chrono::high_resolution_clock::now();
-			auto linkedListTimeInterval = std::chrono::duration_cast<std::chrono::nanoseconds>(linkedListEndTime - linkedListStartTime).count();
-			linkedListAverageTime += linkedListTimeInterval;
-		}
-
-		vertexAverageTime /= 100;
-		linkedListAverageTime /= 100;
-
-		// Write the average times to the file.
-		dataFile << n << '\t' << vertexAverageTime << '\t' << linkedListAverageTime << '\n';
-	}
-
-	dataFile.close();
-
-	return true;
-}
-
-// Generate the script file for the Insert() function.
-bool GenerateScriptInsert(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName)
-{
-	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
-
-	if (!scriptFile)
-		return false;
-
-	// Print out the parameters.
-	scriptFile
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName << "'" << std::endl
-		<< std::endl
-		<< "set title 'Average Completion Time of Insert() vs. Size of Data Set for Vector and LinkedList'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Vector' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Linked List' lw 1 with lines" << std::endl;
-
-	// Close the file.
-	scriptFile.close();
-
-	return true;
 }
 
 int main()
 {	
-	Random random;
-	int minN = 50;
-	int maxN = 1000;
+	Random rand;
 
-	GenerateDataAt("data_at.txt", minN, maxN, random);	
-	GenerateScriptAt("script_at.txt", "data_at.txt", "image_at.png");
-	system("gnuplot.exe script_at.txt");
-	
-	GenerateDataPushFront("data_push_front.txt", minN, maxN, random);
-	GenerateScriptPushFront("script_push_front.txt", "data_push_front.txt", "image_push_front.png");
-	system("gnuplot.exe script_push_front.txt");
-		
-	GenerateDataPushBack("data_push_back.txt", minN, maxN, random);
-	GenerateScriptPushBack("script_push_back.txt", "data_push_back.txt", "image_push_back.png");
-	system("gnuplot.exe script_push_back.txt");
+	// Test bubble sort.
+	{
+		Vector<int> numbers;
+		numbers.Reserve(10);
 
-	GenerateDataEraseAt("data_erase_at.txt", minN, maxN, random);
-	GenerateScriptEraseAt("script_erase_at.txt", "data_erase_at.txt", "image_erase_at.png");
-	system("gnuplot.exe script_erase_at.txt");
-	
-	GenerateDataFind("data_find.txt", minN, maxN, random);
-	GenerateScriptFind("script_find.txt", "data_find.txt", "image_find.png");
-	system("gnuplot.exe script_find.txt");
+		for (int i = 0; i < 20; i++)
+		{
+			numbers.PushBack(rand.Integer(0, 100));
+		}
 
-	GenerateDataContains("data_contains.txt", minN, maxN, random);
-	GenerateScriptContains("script_contains.txt", "data_contains.txt", "image_contains.png");
-	system("gnuplot.exe script_contains.txt");
+		PrintVector(numbers);
 
-	GenerateDataInsert("data_insert.txt", minN, maxN, random);
-	GenerateScriptInsert("script_insert.txt", "data_insert.txt", "image_insert.png");
-	system("gnuplot.exe script_insert.txt");
+		BubbleSort(numbers);
+
+		PrintVector(numbers);
+	}
+
+	// Test insertion sort.
+	{
+		Vector<int> numbers;
+		numbers.Reserve(10);
+
+		for (int i = 0; i < 20; i++)
+		{
+			numbers.PushBack(rand.Integer(0, 100));
+		}
+
+		PrintVector(numbers);
+
+		InsertionSort(numbers);
+
+		PrintVector(numbers);
+	}
+
+	// Test selection sort.
+	{
+		Vector<int> numbers;
+		numbers.Reserve(10);
+
+		for (int i = 0; i < 20; i++)
+		{
+			numbers.PushBack(rand.Integer(0, 100));
+		}
+
+		PrintVector(numbers);
+
+		SelectionSort(numbers);
+
+		PrintVector(numbers);
+	}
 }
