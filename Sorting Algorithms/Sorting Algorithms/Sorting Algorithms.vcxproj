@@ -18,6 +18,13 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Random.h" />
+    <ClInclude Include="Vector.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -138,13 +145,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\Project 1 - Vector vs Linked List (Measurement)\Project 1 - Vector vs Linked List\Random.h" />
-    <ClInclude Include="..\..\Project 1 - Vector vs Linked List (Measurement)\Project 1 - Vector vs Linked List\Vector.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\Project 1 - Vector vs Linked List (Measurement)\Project 1 - Vector vs Linked List\main.cpp" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
