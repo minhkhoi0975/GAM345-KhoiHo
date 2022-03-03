@@ -31,6 +31,15 @@ void Swap(T& val1, T& val2)
 }
 
 template<class T>
+void ReverseOrder(Vector<T>& vector)
+{
+	for (int i = 0; i < vector.Size() / 2; i++)
+	{
+		Swap(vector[i], vector[vector.Size() - i - 1]);
+	}
+}
+
+template<class T>
 void BubbleSort(Vector<T>& vector)
 {
 	for (int i = 0; i < vector.Size(); i++)
@@ -75,6 +84,23 @@ void SelectionSort(Vector<T>& vector)
 int main()
 {	
 	Random rand;
+
+	// Test reversing a vector.
+	{
+		Vector<int> numbers;
+		numbers.Reserve(10);
+
+		for (int i = 0; i < 10; i++)
+		{
+			numbers.PushBack(rand.Integer(0, 100));
+		}
+
+		PrintVector(numbers);
+
+		ReverseOrder(numbers);
+
+		PrintVector(numbers);
+	}
 
 	// Test bubble sort.
 	{
