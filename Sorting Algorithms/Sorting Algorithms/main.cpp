@@ -81,25 +81,191 @@ void SelectionSort(Vector<T>& vector)
 	}
 }
 
-void TestBubbleSort()
+void TestBubbleSort(Random& rand)
 {
+	// Open the file.
+	std::ofstream dataFile("data_bubble_sort.txt", std::ios::trunc);
+	if (!dataFile)
+	{
+		std::cout << "Cannot open the file data_bubble_sort.txt." << std::endl;
+		return;
+	}
+
+	dataFile << "# BubbleSort() randomized input." << std::endl;
+	dataFile << "#\tN\tBestCase\tWorstCase\tAverageCase" << std::endl;
+
 	for (int n = 1; n <= 1000; n += 10)
 	{
-		// Best case.
-		Vector<int> vector0;
-		vector0.Reserve(n);
+		long long bestCaseTime;
+		long long worstCaseTime;
+		long long averageCaseTime;
+		std::chrono::steady_clock::time_point startTime;
+		std::chrono::steady_clock::time_point endTime;
 
-		for (int i = 0; i < n; i++)
+		// Average case (elements are in random order).
+		Vector<int> vector;
+		vector.Resize(n);
+
+		for (int i = 0; i < vector.Size(); i++)
 		{
-			vector0[i] = i;
+			vector[i] = rand.Integer(0, n);
 		}
+
+		startTime = std::chrono::high_resolution_clock::now();
+		BubbleSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		averageCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Best case (elements are in ascending order).
+		startTime = std::chrono::high_resolution_clock::now();
+		BubbleSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		bestCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Worst case (elements are in descending order).
+		ReverseOrder(vector);
+
+		startTime = std::chrono::high_resolution_clock::now();
+		BubbleSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		worstCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+		
+		// Write the times to the file.
+		dataFile << n << '\t' << bestCaseTime << '\t' << worstCaseTime << '\t' << averageCaseTime << std::endl;
 	}
+
+	// Close the file.
+	dataFile.close();
+}
+
+void TestInsertionSort(Random& rand)
+{
+	// Open the file.
+	std::ofstream dataFile("data_insertion_sort.txt", std::ios::trunc);
+	if (!dataFile)
+	{
+		std::cout << "Cannot open the file data_insertion_sort.txt." << std::endl;
+		return;
+	}
+
+	dataFile << "# InsertionSort() randomized input." << std::endl;
+	dataFile << "#\tN\tBestCase\tWorstCase\tAverageCase" << std::endl;
+
+	for (int n = 1; n <= 1000; n += 10)
+	{
+		long long bestCaseTime;
+		long long worstCaseTime;
+		long long averageCaseTime;
+		std::chrono::steady_clock::time_point startTime;
+		std::chrono::steady_clock::time_point endTime;
+
+		// Average case (elements are in random order).
+		Vector<int> vector;
+		vector.Resize(n);
+
+		for (int i = 0; i < vector.Size(); i++)
+		{
+			vector[i] = rand.Integer(0, n);
+		}
+
+		startTime = std::chrono::high_resolution_clock::now();
+		InsertionSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		averageCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Best case (elements are in ascending order).
+		startTime = std::chrono::high_resolution_clock::now();
+		InsertionSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		bestCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Worst case (elements are in descending order).
+		ReverseOrder(vector);
+
+		startTime = std::chrono::high_resolution_clock::now();
+		InsertionSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		worstCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Write the times to the file.
+		dataFile << n << '\t' << bestCaseTime << '\t' << worstCaseTime << '\t' << averageCaseTime << std::endl;
+	}
+
+	// Close the file.
+	dataFile.close();
+}
+
+void TestSelectionSort(Random& rand)
+{
+	// Open the file.
+	std::ofstream dataFile("data_selection_sort.txt", std::ios::trunc);
+	if (!dataFile)
+	{
+		std::cout << "Cannot open the file data_selection_sort.txt." << std::endl;
+		return;
+	}
+
+	dataFile << "# SelectionSort() randomized input." << std::endl;
+	dataFile << "#\tN\tBestCase\tWorstCase\tAverageCase" << std::endl;
+
+	for (int n = 1; n <= 1000; n += 10)
+	{
+		long long bestCaseTime;
+		long long worstCaseTime;
+		long long averageCaseTime;
+		std::chrono::steady_clock::time_point startTime;
+		std::chrono::steady_clock::time_point endTime;
+
+		// Average case (elements are in random order).
+		Vector<int> vector;
+		vector.Resize(n);
+
+		for (int i = 0; i < vector.Size(); i++)
+		{
+			vector[i] = rand.Integer(0, n);
+		}
+
+		startTime = std::chrono::high_resolution_clock::now();
+		SelectionSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		averageCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Best case (elements are in ascending order).
+		startTime = std::chrono::high_resolution_clock::now();
+		SelectionSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		bestCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Worst case (elements are in descending order).
+		ReverseOrder(vector);
+
+		startTime = std::chrono::high_resolution_clock::now();
+		SelectionSort(vector);
+		endTime = std::chrono::high_resolution_clock::now();
+
+		worstCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
+
+		// Write the times to the file.
+		dataFile << n << '\t' << bestCaseTime << '\t' << worstCaseTime << '\t' << averageCaseTime << std::endl;
+	}
+
+	// Close the file.
+	dataFile.close();
 }
 
 int main()
 {	
 	Random rand;
 
+	/*
 	// Test reversing a vector.
 	{
 		Vector<int> numbers;
@@ -167,4 +333,13 @@ int main()
 
 		PrintVector(numbers);
 	}
+	*/
+
+	TestBubbleSort(rand);
+	TestInsertionSort(rand);
+	TestSelectionSort(rand);
+
+	system("gnuplot.exe script_best_case.txt");
+	system("gnuplot.exe script_worst_case.txt");
+	system("gnuplot.exe script_average_case.txt");
 }
