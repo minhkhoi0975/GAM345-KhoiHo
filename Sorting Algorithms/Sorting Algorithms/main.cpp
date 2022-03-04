@@ -353,7 +353,7 @@ int main()
 		Vector<int> numbers;
 		numbers.Reserve(10);
 
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < 10; i++)
 		{
 			numbers.PushBack(rand.Integer(0, 100));
 		}
@@ -365,7 +365,7 @@ int main()
 		PrintVector(numbers);
 	}
 	*/
-
+	
 	//Test selection sort.
 	/*
 	{
@@ -384,7 +384,7 @@ int main()
 		PrintVector(numbers);
 	}
 	*/
-
+	
 	TestBubbleSort(rand);
 	TestInsertionSort(rand);
 	TestSelectionSort(rand);
