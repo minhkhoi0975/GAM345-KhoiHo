@@ -44,13 +44,20 @@ void BubbleSort(Vector<T>& vector)
 {
 	for (int i = 0; i < vector.Size(); i++)
 	{
+		bool isSorted = true;
+
 		for (int j = 0; j < vector.Size() - i - 1; j++)
 		{
 			if (vector[j + 1] < vector[j])
 			{
 				Swap(vector[j], vector[j + 1]);
+				isSorted = false;
 			}
 		}
+
+		// If the vector is sorted, there is no need to go to the next pass.
+		if (isSorted)
+			break;
 	}
 }
 
@@ -71,13 +78,17 @@ void SelectionSort(Vector<T>& vector)
 {
 	for (int i = 0; i < vector.Size() - 1; i++)
 	{
+		int minIndex = i;
+
 		for (int j = i + 1; j < vector.Size(); j++)
 		{
-			if (vector[j] < vector[i])
+			if (vector[j] < vector[minIndex])
 			{
-				Swap(vector[j], vector[i]);
+				minIndex = j;
 			}
 		}
+
+		Swap(vector[i], vector[minIndex]);
 	}
 }
 
@@ -103,32 +114,43 @@ void TestBubbleSort(Random& rand)
 		std::chrono::steady_clock::time_point endTime;
 
 		// Average case (elements are in random order).
-		Vector<int> vector;
-		vector.Resize(n);
-
-		for (int i = 0; i < vector.Size(); i++)
+		Vector<int> vector1;
+		vector1.Resize(n);
+		for (int i = 0; i < vector1.Size(); i++)
 		{
-			vector[i] = rand.Integer(0, n);
+			vector1[i] = rand.Integer(0, n);
 		}
 
 		startTime = std::chrono::high_resolution_clock::now();
-		BubbleSort(vector);
+		BubbleSort(vector1);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		averageCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 
 		// Best case (elements are in ascending order).
+		Vector<int> vector2;
+		vector2.Resize(n);
+		for (int i = 0; i < vector2.Size(); i++)
+		{
+			vector2[i] = i;
+		}
+
 		startTime = std::chrono::high_resolution_clock::now();
-		BubbleSort(vector);
+		BubbleSort(vector2);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		bestCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 
 		// Worst case (elements are in descending order).
-		ReverseOrder(vector);
+		Vector<int> vector3;
+		vector3.Resize(n);
+		for (int i = vector3.Size() - 1; i >= 0; i--)
+		{
+			vector3[vector3.Size() - 1 - i] = i;
+		}
 
 		startTime = std::chrono::high_resolution_clock::now();
-		BubbleSort(vector);
+		BubbleSort(vector3);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		worstCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
@@ -163,32 +185,43 @@ void TestInsertionSort(Random& rand)
 		std::chrono::steady_clock::time_point endTime;
 
 		// Average case (elements are in random order).
-		Vector<int> vector;
-		vector.Resize(n);
-
-		for (int i = 0; i < vector.Size(); i++)
+		Vector<int> vector1;
+		vector1.Resize(n);
+		for (int i = 0; i < vector1.Size(); i++)
 		{
-			vector[i] = rand.Integer(0, n);
+			vector1[i] = rand.Integer(0, n);
 		}
 
 		startTime = std::chrono::high_resolution_clock::now();
-		InsertionSort(vector);
+		InsertionSort(vector1);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		averageCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 
 		// Best case (elements are in ascending order).
+		Vector<int> vector2;
+		vector2.Resize(n);
+		for (int i = 0; i < vector2.Size(); i++)
+		{
+			vector2[i] = i;
+		}
+
 		startTime = std::chrono::high_resolution_clock::now();
-		InsertionSort(vector);
+		InsertionSort(vector2);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		bestCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 
 		// Worst case (elements are in descending order).
-		ReverseOrder(vector);
+		Vector<int> vector3;
+		vector3.Resize(n);
+		for (int i = vector3.Size() - 1; i >= 0; i--)
+		{
+			vector3[vector3.Size() - 1 - i] = i;
+		}
 
 		startTime = std::chrono::high_resolution_clock::now();
-		InsertionSort(vector);
+		InsertionSort(vector3);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		worstCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
@@ -223,32 +256,43 @@ void TestSelectionSort(Random& rand)
 		std::chrono::steady_clock::time_point endTime;
 
 		// Average case (elements are in random order).
-		Vector<int> vector;
-		vector.Resize(n);
-
-		for (int i = 0; i < vector.Size(); i++)
+		Vector<int> vector1;
+		vector1.Resize(n);
+		for (int i = 0; i < vector1.Size(); i++)
 		{
-			vector[i] = rand.Integer(0, n);
+			vector1[i] = rand.Integer(0, n);
 		}
 
 		startTime = std::chrono::high_resolution_clock::now();
-		SelectionSort(vector);
+		SelectionSort(vector1);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		averageCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 
 		// Best case (elements are in ascending order).
+		Vector<int> vector2;
+		vector2.Resize(n);
+		for (int i = 0; i < vector2.Size(); i++)
+		{
+			vector2[i] = i;
+		}
+
 		startTime = std::chrono::high_resolution_clock::now();
-		SelectionSort(vector);
+		SelectionSort(vector2);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		bestCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 
 		// Worst case (elements are in descending order).
-		ReverseOrder(vector);
+		Vector<int> vector3;
+		vector3.Resize(n);
+		for (int i = vector3.Size() - 1; i >= 0; i--)
+		{
+			vector3[vector3.Size() - 1 - i] = i;
+		}
 
 		startTime = std::chrono::high_resolution_clock::now();
-		SelectionSort(vector);
+		SelectionSort(vector3);
 		endTime = std::chrono::high_resolution_clock::now();
 
 		worstCaseTime = std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
@@ -282,8 +326,10 @@ int main()
 
 		PrintVector(numbers);
 	}
+	*/
 
 	// Test bubble sort.
+	/*
 	{
 		Vector<int> numbers;
 		numbers.Reserve(10);
@@ -299,13 +345,15 @@ int main()
 
 		PrintVector(numbers);
 	}
+	*/
 
 	// Test insertion sort.
+	/*
 	{
 		Vector<int> numbers;
 		numbers.Reserve(10);
 
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < 100; i++)
 		{
 			numbers.PushBack(rand.Integer(0, 100));
 		}
@@ -316,13 +364,15 @@ int main()
 
 		PrintVector(numbers);
 	}
+	*/
 
-	// Test selection sort.
+	//Test selection sort.
+	/*
 	{
 		Vector<int> numbers;
-		numbers.Reserve(10);
+		numbers.Reserve(50);
 
-		for (int i = 0; i < 20; i++)
+		for (int i = 0; i < 50; i++)
 		{
 			numbers.PushBack(rand.Integer(0, 100));
 		}
@@ -340,6 +390,21 @@ int main()
 	TestSelectionSort(rand);
 
 	system("gnuplot.exe script_best_case.txt");
+	system("gnuplot.exe script_bubble_sort_best_case.txt");
+	system("gnuplot.exe script_insertion_sort_best_case.txt");
+	system("gnuplot.exe script_selection_sort_best_case.txt");
+
 	system("gnuplot.exe script_worst_case.txt");
+	system("gnuplot.exe script_bubble_sort_worst_case.txt");
+	system("gnuplot.exe script_insertion_sort_worst_case.txt");
+	system("gnuplot.exe script_selection_sort_worst_case.txt");
+
 	system("gnuplot.exe script_average_case.txt");
+	system("gnuplot.exe script_bubble_sort_average_case.txt");
+	system("gnuplot.exe script_insertion_sort_average_case.txt");
+	system("gnuplot.exe script_selection_sort_average_case.txt");
+
+	//system("gnuplot.exe script_bubble_sort.txt");
+	//system("gnuplot.exe script_insertion_sort.txt");
+	//system("gnuplot.exe script_selection_sort.txt");
 }

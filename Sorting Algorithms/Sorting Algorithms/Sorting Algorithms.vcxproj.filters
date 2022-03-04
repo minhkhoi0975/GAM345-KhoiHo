@@ -27,15 +27,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="script_best_case.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="script_worst_case.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="script_average_case.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
 </Project>

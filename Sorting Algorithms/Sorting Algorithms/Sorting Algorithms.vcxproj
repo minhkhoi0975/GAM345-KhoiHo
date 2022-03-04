@@ -25,11 +25,6 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="script_average_case.txt" />
-    <Text Include="script_best_case.txt" />
-    <Text Include="script_worst_case.txt" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
