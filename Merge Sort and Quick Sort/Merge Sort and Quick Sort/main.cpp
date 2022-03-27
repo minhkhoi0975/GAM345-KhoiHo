@@ -84,6 +84,30 @@ void PrintArray(int* arr, int size)
 }
 
 template <class T>
+void Swap(T& a, T& b)
+{
+	T temp = a;
+	a = b;
+	b = temp;
+}
+
+template<class T>
+void PrintVector(Vector<T>& vector)
+{
+	const int size = vector.Size();
+
+	for (int i = 0; i < size; i++)
+	{
+		std::cout << vector[i] << ' ';
+	}
+	std::cout << std::endl;
+}
+
+// -------------------------------
+// Merge Sort
+// -------------------------------
+
+template <class T>
 void MergeSortRecursive(Vector<T>& vector)
 {
 	MergeSortRecursive(vector, 0, vector.Size() - 1);
@@ -159,23 +183,86 @@ void Merge(Vector<T>& numbers, const int& start, const int& mid, const int& end)
 	}
 }
 
-template<class T>
-void PrintVector(Vector<T>& vector)
-{
-	const int size = vector.Size();
+// -------------------------------
+// Quick Sort
+// -------------------------------
 
-	for (int i = 0; i < size; i++)
+template <class T>
+void QuickSortRecursive(Vector<T>& vector)
+{
+	QuickSortRecursive(vector, 0, vector.Size() - 1);
+}
+
+template <class T>
+void QuickSortRecursive(Vector<T>& vector, const int& start, const int& end)
+{
+	// Don't sort if the size of the subvector is 1 or lower.
+	if (end - start <= 0)
+		return;
+
+	// Partition the vector.
+	int pivot = Partition(vector, start, end);
+
+	// Quick sort the subvector on the left of the pivot.
+	QuickSortRecursive(vector, start, pivot - 1);
+
+	// Quick sort the subvector on the right of the pivot.
+	QuickSortRecursive(vector, pivot + 1, end);
+}
+
+template <class T>
+int Partition(Vector<T>& vector, const int& start, const int& end)
+{
+	// The pivot is the leftmost element of the vector.
+	T pivot = vector[start];
+
+	// Move the elements.
+	int leftIndex = start;
+	int rightIndex = end;
+	bool currentIndex = true;  // true = right index, false = left index
+
+	while (leftIndex < rightIndex)
 	{
-		std::cout << vector[i] << ' ';
+		if (currentIndex)
+		{
+			if (vector[rightIndex] < pivot)
+			{
+				vector[leftIndex] = vector[rightIndex];
+				++leftIndex;
+				currentIndex = false;
+			}
+			else
+			{
+				--rightIndex;
+			}
+		}
+		else
+		{
+			if (vector[leftIndex] > pivot)
+			{
+				vector[rightIndex] = vector[leftIndex];
+				--rightIndex;
+				currentIndex = true;
+			}
+			else
+			{
+				++leftIndex;
+			}
+		}
 	}
-	std::cout << std::endl;
+
+	// Move the pivot to the empty slot.
+	vector[leftIndex] = pivot;
+
+	// Return the pivot.
+	return leftIndex;
 }
 
 int main()
 {
 	// Create a vector of random numbers.
 	Random random;
-	const int VECTOR_SIZE = 10;
+	const int VECTOR_SIZE = 20;
 	const int MIN_INT_VAL = 1;
 	const int MAX_INT_VAL = 100;
 
@@ -189,7 +276,10 @@ int main()
 	PrintVector(numbers);
 
 	// Merge sort.
-	MergeSortRecursive(numbers);
+	//MergeSortRecursive(numbers);
+
+	// Quick sort.
+	QuickSortRecursive(numbers);
 
 	PrintVector(numbers);
 }
