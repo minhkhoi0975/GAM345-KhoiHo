@@ -145,6 +145,9 @@
     <ClInclude Include="Random.h" />
     <ClInclude Include="Vector.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Worst and Average Case Scenarios.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
