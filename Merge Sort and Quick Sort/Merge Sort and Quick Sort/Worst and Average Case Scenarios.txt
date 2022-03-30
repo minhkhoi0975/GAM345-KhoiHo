@@ -1,9 +1,0 @@
-Worst Case:
-+ Quick sort: In every partions, all the elements move to one side of the pivot. This happens when the elements are already sorted.
-+ Merge sort:
-+ Selection sort: The elements are in reverse order. For each iteration, the algorithm has to compare the current element with all the unsorted elements.
-
-Average Case:
-+ Quick sort:
-+ Merge sort:
-+ Selection sort:

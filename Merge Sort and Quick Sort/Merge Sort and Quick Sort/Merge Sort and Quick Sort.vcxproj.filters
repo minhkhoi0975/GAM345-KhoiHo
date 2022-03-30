@@ -27,9 +27,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="Worst and Average Case Scenarios.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
 </Project>
