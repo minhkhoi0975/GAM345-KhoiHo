@@ -290,6 +290,90 @@ long long MeasureSortingTime(const Vector<int>& vector, SortingFunction sortingF
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(endTime - startTime).count();
 }
 
+// Generate the worst case for merge sort (source: https://stackoverflow.com/questions/24594112/when-will-the-worst-case-of-merge-sort-occur).
+template<class T>
+void GenerateWorstCaseMergeSort(Vector<T>& sortedVector)
+{
+	if (sortedVector.Size() <= 1)
+		return;
+
+	if (sortedVector.Size() == 2)
+	{
+		Swap(sortedVector[0], sortedVector[1]);
+		return;
+	}
+
+	int mid = (sortedVector.Size() + 1) / 2;
+
+	Vector<T> leftHalf, rightHalf;
+	leftHalf.Resize(mid);
+	rightHalf.Resize(sortedVector.Size() - mid);
+
+	int i, j;
+
+	//Storing alternate elements in left subarray
+	for (i = 0, j = 0; i < sortedVector.Size(); i += 2, ++j)
+	{
+		leftHalf[j] = sortedVector[i];
+	}
+
+	//Storing alternate elements in right subarray
+	for (i = 1, j = 0; i < sortedVector.Size(); i += 2, ++j)
+	{
+		rightHalf[j] = sortedVector[i];
+	}
+
+	GenerateWorstCaseMergeSort(leftHalf);
+	GenerateWorstCaseMergeSort(rightHalf);
+
+	Merge(sortedVector, leftHalf, rightHalf);
+}
+
+// Join leftHalf and rightHalf together.
+template<class T>
+void Merge(Vector<T>& mergedVector, Vector<T>& leftHalf, Vector<T>& rightHalf)
+{
+	int i, j;
+
+	// Add elements from left subarray.
+	for (i = 0; i < leftHalf.Size(); i++)
+	{
+		mergedVector[i] = leftHalf[i];
+	}
+
+	// Add elements from right subarray.
+	for (j = 0; j < rightHalf.Size(); j++, i++)
+	{
+		mergedVector[i] = rightHalf[j];
+	}
+}
+
+// Generate the worst case for each sorting element:
+// + Merge sort: For every merge operation, all the elements are compared (e.g. [4 0 6 2 5 1 7 3], [8 0 4 6 2 5 1 7 3]).
+// + Quick sort: The elements are sorted.
+// + Selection sort: The elements are sorted in reverse order.
+template<class T>
+void GenerateWorstCase(Vector<T>& sortedVector, Vector<T>& mergeSortVector, Vector<T>& quickSortVector, Vector<T>& selectionSortVector)
+{
+	// Get the size and half size of the vector.
+	const int SIZE = sortedVector.Size();
+	const int HALF_SIZE = SIZE / 2;
+
+	// Generate the worst case for merge sort.
+	mergeSortVector = sortedVector;
+	GenerateWorstCaseMergeSort(mergeSortVector);
+
+	// Generate the worst case for quick sort.
+	quickSortVector = sortedVector;
+
+	// Generate the worst case for selection sort.
+	selectionSortVector = sortedVector;
+	for (int i = 0; i < HALF_SIZE; ++i)
+	{
+		Swap(selectionSortVector[i], selectionSortVector[SIZE - 1 - i]);
+	}
+}
+
 // Generate data for the WORST case of quick sort.
 // Quick sort has the worst case when elements always move to one side of the pivot for every partition.
 // Since the partition algorithm chooses the leftmost element as a pivot, quicksort is in worst case when the vector is already sorted.
@@ -323,13 +407,17 @@ bool GenerateDataWorstCase(const std::string& dataFileName, const int& minN, con
 				numbers[i] = random.Integer(1, n);
 			}
 
-			// Sort the algorithm to generate the worst case for the quick sort algorithm.
+			// Sort the vector.
 			QuickSortRecursive(numbers);
 
+			// Generate the worst case for each sorting algorithm.
+			Vector<int> mergeSortVector, quickSortVector, selectionSortVector;
+			GenerateWorstCase(numbers, mergeSortVector, quickSortVector, selectionSortVector);
+
 			// Measure and add the time to the total time.
-			quickSortAverageTime += MeasureSortingTime(numbers, QuickSortRecursive);
-			mergeSortAverageTime += MeasureSortingTime(numbers, MergeSortRecursive);
-			selectionSortAverageTime += MeasureSortingTime(numbers, SelectionSort);
+			quickSortAverageTime += MeasureSortingTime(quickSortVector, QuickSortRecursive);
+			mergeSortAverageTime += MeasureSortingTime(mergeSortVector, MergeSortRecursive);
+			selectionSortAverageTime += MeasureSortingTime(selectionSortVector, SelectionSort);
 		}
 
 		// Calculate the average time.
@@ -346,8 +434,11 @@ bool GenerateDataWorstCase(const std::string& dataFileName, const int& minN, con
 	return true;
 }
 
-// outPutFile1 is for Quick Sort vs Merge Sort, outputFile2 is for Quick Sort vs Selection Sort, outputFile3 is for Quick Sort only.
-bool GenerateScriptWorstCase(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName1, const std::string& outputFileName2, const std::string& outputFileName3)
+// outputFileNameAll is for Quick Sort vs Merge Sort vs Selection Sort
+// outputFileNameQS is for Quick Sort only
+// outputFileNameMS is for Merge Sort only
+// outputFileNameSS is for Selection Sort only
+bool GenerateScriptWorstCase(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileNameAll, const std::string& outputFileNameQS, const std::string& outputFileNameMS, const std::string& outputFileNameSS)
 {
 	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
 
@@ -356,42 +447,55 @@ bool GenerateScriptWorstCase(const std::string& scriptFileName, const std::strin
 
 	// Print out the script.
 	scriptFile
-		<< "# Quick Sort vs Merge Sort in Worst Case of Quick Sort" << std::endl
+		<< "# Quick Sort vs Merge Sort vs Selection in Worst Case" << std::endl
 		<< "reset" << std::endl
 		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName1 << "'" << std::endl
-		<< "set title 'Average Completion Time of Quick Sort vs Merge Sort in Worst Case of Quick Sort'" << std::endl
+		<< "set output '" << outputFileNameAll << "'" << std::endl
+		<< "set title 'Average Completion Time of Quick Sort vs Merge Sort vs Selection Sort in Worst Case'" << std::endl
 		<< "set xlabel 'Size (N)'" << std::endl
 		<< "set ylabel 'Average time (ns)'" << std::endl
 		<< "set xzeroaxis" << std::endl
 		<< "set key inside top left" << std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Merge Sort' lw 1 with lines" << std::endl
-
-		<< std::endl
-
-		<< "# Quick Sort vs Selection Sort in Worst Case of Quick Sort" << std::endl
-		<< "reset" << std::endl
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName2 << "'" << std::endl
-		<< "set title 'Average Completion Time of Quick Sort vs Selection Sort in Worst Case of Quick Sort'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:4 title 'Selection Sort' lw 1 with lines" << std::endl
+		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Merge Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:4 title 'Selection Sort' lw 1 with lines" << std::endl
 
 		<< std::endl
 
 		<< "# Quick Sort in Worst Case" << std::endl
 		<< "reset" << std::endl
 		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName3 << "'" << std::endl
+		<< "set output '" << outputFileNameQS << "'" << std::endl
 		<< "set title 'Average Completion Time of Quick Sort in Worst Case'" << std::endl
 		<< "set xlabel 'Size (N)'" << std::endl
 		<< "set ylabel 'Average time (ns)'" << std::endl
 		<< "set xzeroaxis" << std::endl
 		<< "set key inside top left" << std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines" << std::endl;
+		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines" << std::endl
+
+		<< std::endl
+
+		<< "# Merge Sort in Worst Case" << std::endl
+		<< "reset" << std::endl
+		<< "set terminal png size 1920,1080" << std::endl
+		<< "set output '" << outputFileNameMS << "'" << std::endl
+		<< "set title 'Average Completion Time of Merge Sort in Worst Case'" << std::endl
+		<< "set xlabel 'Size (N)'" << std::endl
+		<< "set ylabel 'Average time (ns)'" << std::endl
+		<< "set xzeroaxis" << std::endl
+		<< "set key inside top left" << std::endl
+		<< "plot \"" << dataFileName << "\" using 1:3 title 'Merge Sort' lw 1 with lines" << std::endl
+
+		<< std::endl
+
+		<< "# Selection Sort in Worst Case" << std::endl
+		<< "reset" << std::endl
+		<< "set terminal png size 1920,1080" << std::endl
+		<< "set output '" << outputFileNameSS << "'" << std::endl
+		<< "set title 'Average Completion Time of Selection Sort in Worst Case'" << std::endl
+		<< "set xlabel 'Size (N)'" << std::endl
+		<< "set ylabel 'Average time (ns)'" << std::endl
+		<< "set xzeroaxis" << std::endl
+		<< "set key inside top left" << std::endl
+		<< "plot \"" << dataFileName << "\" using 1:4 title 'Selection Sort' lw 1 with lines" << std::endl;
 
 	// Close the file.
 	scriptFile.close();
@@ -452,8 +556,11 @@ bool GenerateDataAverageCase(const std::string& dataFileName, const int& minN, c
 	return true;
 }
 
-// outPutFile1 is for Quick Sort vs Merge Sort, and outputFile2 is for QuickSort vs Selection Sort.
-bool GenerateScriptAverageCase(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileName1, const std::string& outputFileName2, const std::string& outputFileName3)
+// outputFileNameAll is for Quick Sort vs Merge Sort vs Selection Sort
+// outputFileNameQS is for Quick Sort only
+// outputFileNameMS is for Merge Sort only
+// outputFileNameSS is for Selection Sort only
+bool GenerateScriptAverageCase(const std::string& scriptFileName, const std::string& dataFileName, const std::string& outputFileNameAll, const std::string& outputFileNameQS, const std::string& outputFileNameMS, const std::string& outputFileNameSS)
 {
 	std::fstream scriptFile(scriptFileName, std::ios::out | std::ios::trunc);
 
@@ -462,42 +569,55 @@ bool GenerateScriptAverageCase(const std::string& scriptFileName, const std::str
 
 	// Print out the script.
 	scriptFile
-		<< "# Quick Sort vs Merge Sort in Average Case of Quick Sort" << std::endl
+		<< "# Quick Sort vs Merge Sort vs Selection Sort in Average Case" << std::endl
 		<< "reset" << std::endl
 		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName1 << "'" << std::endl
-		<< "set title 'Average Completion Time of Quick Sort vs Merge Sort in Average Case of Quick Sort'" << std::endl
+		<< "set output '" << outputFileNameAll << "'" << std::endl
+		<< "set title 'Average Completion Time of Quick Sort vs Merge Sort vs Selection Sort in Average Case'" << std::endl
 		<< "set xlabel 'Size (N)'" << std::endl
 		<< "set ylabel 'Average time (ns)'" << std::endl
 		<< "set xzeroaxis" << std::endl
 		<< "set key inside top left" << std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Average Case Quick Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Merge Sort' lw 1 with lines" << std::endl
-
-		<< std::endl
-
-		<< "# Quick Sort vs Selection Sort in Average Case of Quick Sort" << std::endl
-		<< "reset" << std::endl
-		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName2 << "'" << std::endl
-		<< "set title 'Average Completion Time of Quick Sort vs Selection Sort in Average Case of Quick Sort'" << std::endl
-		<< "set xlabel 'Size (N)'" << std::endl
-		<< "set ylabel 'Average time (ns)'" << std::endl
-		<< "set xzeroaxis" << std::endl
-		<< "set key inside top left" << std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Average Case Quick Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:4 title 'Selection Sort' lw 1 with lines" << std::endl
+		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:3 title 'Merge Sort' lw 1 with lines, \"" << dataFileName << "\" using 1:4 title 'Selection Sort' lw 1 with lines" << std::endl
 
 		<< std::endl
 
 		<< "# Quick Sort in Average Case" << std::endl
 		<< "reset" << std::endl
 		<< "set terminal png size 1920,1080" << std::endl
-		<< "set output '" << outputFileName3 << "'" << std::endl
+		<< "set output '" << outputFileNameQS << "'" << std::endl
 		<< "set title 'Average Completion Time of Quick Sort in Average Case'" << std::endl
 		<< "set xlabel 'Size (N)'" << std::endl
 		<< "set ylabel 'Average time (ns)'" << std::endl
 		<< "set xzeroaxis" << std::endl
 		<< "set key inside top left" << std::endl
-		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines" << std::endl;
+		<< "plot \"" << dataFileName << "\" using 1:2 title 'Quick Sort' lw 1 with lines" << std::endl
+
+		<< std::endl
+
+		<< "# Merge Sort in Average Case" << std::endl
+		<< "reset" << std::endl
+		<< "set terminal png size 1920,1080" << std::endl
+		<< "set output '" << outputFileNameMS << "'" << std::endl
+		<< "set title 'Average Completion Time of Merge Sort in Average Case'" << std::endl
+		<< "set xlabel 'Size (N)'" << std::endl
+		<< "set ylabel 'Average time (ns)'" << std::endl
+		<< "set xzeroaxis" << std::endl
+		<< "set key inside top left" << std::endl
+		<< "plot \"" << dataFileName << "\" using 1:3 title 'Merge Sort' lw 1 with lines" << std::endl
+
+		<< std::endl
+
+		<< "# Selection Sort in Average Case" << std::endl
+		<< "reset" << std::endl
+		<< "set terminal png size 1920,1080" << std::endl
+		<< "set output '" << outputFileNameSS << "'" << std::endl
+		<< "set title 'Average Completion Time of Selection Sort in Average Case'" << std::endl
+		<< "set xlabel 'Size (N)'" << std::endl
+		<< "set ylabel 'Average time (ns)'" << std::endl
+		<< "set xzeroaxis" << std::endl
+		<< "set key inside top left" << std::endl
+		<< "plot \"" << dataFileName << "\" using 1:4 title 'Selection Sort' lw 1 with lines" << std::endl;
 
 	// Close the file.
 	scriptFile.close();
@@ -536,13 +656,47 @@ int main()
 	}
 	*/
 
+	/*
+	// Test generating vectors for worst cases.
+	{
+		const int MAX_VECTOR_SIZE = 9;
+		const int MIN_INT_VAL = 1;
+		const int MAX_INT_VAL = 100;
+
+		Vector<int> numbers;
+
+		numbers.Resize(MAX_VECTOR_SIZE);
+		for (int i = 0; i < MAX_VECTOR_SIZE; i++)
+		{
+			numbers[i] = i;
+			//numbers[i] = random.Integer(MIN_INT_VAL, MAX_INT_VAL);
+		}
+		QuickSortRecursive(numbers);
+
+		std::cout << "Sorted vector: ";
+		PrintVector(numbers);
+
+		Vector<int> mergeSortVector, quickSortVector, selectionSortVector;
+		GenerateWorstCase(numbers, mergeSortVector, quickSortVector, selectionSortVector);
+
+		std::cout << "Merge sort's worst case: ";
+		PrintVector(mergeSortVector);
+
+		std::cout << "Quick sort's worst case: ";
+		PrintVector(quickSortVector);
+
+		std::cout << "Selection sort's worst case: ";
+		PrintVector(selectionSortVector);
+	}
+	*/
+
 	// Worst case.
 	GenerateDataWorstCase("worst_case_data.txt", 1, 200, random);
-	GenerateScriptWorstCase("worst_case_script.txt", "worst_case_data.txt", "worst_case_output_quicksort_vs_mergesort.png", "worst_case_output_quicksort_vs_selectionsort.png", "worst_case_output_quicksort.png");
+	GenerateScriptWorstCase("worst_case_script.txt", "worst_case_data.txt", "worst_case_output.png", "worst_case_output_quicksort_only.png", "worst_case_output_mergesort_only.png", "worst_case_output_selectionsort_only.png");
 	system("gnuplot worst_case_script.txt");
 
 	// Average case.
 	GenerateDataAverageCase("average_case_data.txt", 1, 200, random);
-	GenerateScriptAverageCase("average_case_script.txt", "average_case_data.txt", "average_case_output_quicksort_vs_mergesort.png", "average_case_output_quicksort_vs_selectionsort.png", "average_case_output_quicksort.png");
+	GenerateScriptAverageCase("average_case_script.txt", "average_case_data.txt", "average_case_output.png", "average_case_output_quicksort_only.png", "average_case_output_mergesort_only.png", "average_case_output_selectionsort_only.png");
 	system("gnuplot average_case_script.txt");
 }
