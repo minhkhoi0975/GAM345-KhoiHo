@@ -1,0 +1,65 @@
+# Quick Sort vs Merge Sort vs Selection in Worst Case
+reset
+set terminal png size 1920,1080
+set output 'image_worstcase_all.png'
+set title 'Completion Time of Quick Sort vs Merge Sort vs Selection Sort in Worst Case'
+set xlabel 'Size (N)'
+set ylabel 'Average time (ns)'
+set xzeroaxis
+set key inside top left
+plot "data_quicksort.txt" using 1:2 title 'Quick Sort' lc 1 lw 5 with lines, "data_mergesort.txt" using 1:2 title 'Merge Sort' lc 2 lw 5 with lines, "data_selectionsort.txt" using 1:2 title 'Selection Sort' lc 3 lw 5 with lines
+
+# Quick Sort vs Merge Sort in Worst Case
+reset
+set terminal png size 1920,1080
+set output 'image_worstcase_quicksort_vs_mergesort.png'
+set title 'Completion Time of Quick Sort vs Merge Sort in Worst Case'
+set xlabel 'Size (N)'
+set ylabel 'Average time (ns)'
+set xzeroaxis
+set key inside top left
+plot "data_quicksort.txt" using 1:2 title 'Quick Sort' lc 1 lw 5 with lines, "data_mergesort.txt" using 1:2 title 'Merge Sort' lc 2 lw 5 with lines
+
+# Quick Sort vs Selection Sort in Worst Case
+reset
+set terminal png size 1920,1080
+set output 'image_worstcase_quicksort_vs_selectionsort.png'
+set title 'Completion Time of Quick Sort vs Selection Sort in Worst Case'
+set xlabel 'Size (N)'
+set ylabel 'Average time (ns)'
+set xzeroaxis
+set key inside top left
+plot "data_quicksort.txt" using 1:2 title 'Quick Sort' lc 1 lw 5 with lines, "data_selectionsort.txt" using 1:2 title 'Selection Sort' lc 3 lw 5 with lines
+
+# Quick Sort in Worst Case
+reset
+set terminal png size 1920,1080
+set output 'image_worstcase_quicksort.png'
+set title 'Completion Time of Quick Sort in Worst Case'
+set xlabel 'Size (N)'
+set ylabel 'Average time (ns)'
+set xzeroaxis
+set key inside top left
+plot "data_quicksort.txt" using 1:2 title 'Quick Sort' lc 1 lw 5 with lines
+
+# Merge Sort in Worst Case
+reset
+set terminal png size 1920,1080
+set output 'image_worstcase_mergesort.png'
+set title 'Completion Time of Merge Sort in Worst Case'
+set xlabel 'Size (N)'
+set ylabel 'Average time (ns)'
+set xzeroaxis
+set key inside top left
+plot "data_mergesort.txt" using 1:2 title 'Merge Sort' lc 2 lw 5 with lines
+
+# Selection Sort in Worst Case
+reset
+set terminal png size 1920,1080
+set output 'image_worstcase_selectionsort.png'
+set title 'Completion Time of Selection Sort in Worst Case'
+set xlabel 'Size (N)'
+set ylabel 'Average time (ns)'
+set xzeroaxis
+set key inside top left
+plot "data_selectionsort.txt" using 1:2 title 'Selection Sort' lc 3 lw 5 with lines
