@@ -108,6 +108,9 @@ public:
 	// Get the size of the tree.
 	int Size() const;
 
+	// Pre-order traversal.
+	void PrintPreOrder();
+
 	// Print the values in-order.
 	void PrintInOrder();
 
@@ -282,10 +285,49 @@ inline int BinaryTree<T>::Size() const
 }
 
 template<class T>
+inline void BinaryTree<T>::PrintPreOrder()
+{
+	if (root == nullptr)
+	{
+		std::cout << "The tree is empty." << std::endl;
+		return;
+	}
+
+	// Use this stack to keep track of all the nodes that need to be printed.
+	Stack<Node*> stack;
+
+	stack.Push(root);
+
+	while (stack.Size() > 0)
+	{
+		// Pop out the node to be printed out.
+		Node* currentNode = stack.Pop();
+
+		// We push the right child node first before the left child node because we want to print out the left node first.
+		if (currentNode->right != nullptr)
+		{
+			stack.Push(currentNode->right);
+		}
+		if (currentNode->left != nullptr)
+		{
+			stack.Push(currentNode->left);
+		}
+
+		// Print out the poped node.
+		std::cout << currentNode->value << ' ';
+	}
+
+	std::cout << std::endl;
+}
+
+template<class T>
 inline void BinaryTree<T>::PrintInOrder()
 {
 	if (root == nullptr)
+	{
 		std::cout << "The tree is empty." << std::endl;
+		return;
+	}
 
 	// Use this stack to keep track of all the nodes that need to be printed.
 	Stack<Node*> stack;
