@@ -86,7 +86,7 @@ public:
 };
 
 template<class T>
-inline LinkedList<T>::LinkedList()
+inline LinkedList<T>::LinkedList(): head(nullptr), tail(nullptr), size(0)
 {
 }
 
