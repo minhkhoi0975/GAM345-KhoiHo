@@ -54,6 +54,16 @@ public:
 		return Vector2(scale * v.x, scale * v.y);
 	}
 
+	bool operator==(const Vector2& right) const
+	{
+		return this->x == right.x && this->y == right.y;
+	}
+
+	bool operator!=(const Vector2& right) const
+	{
+		return this->x != right.x || this->y != right.y;
+	}
+
 	float Dot(const Vector2& other) const
 	{
 		return x * other.x + y * other.y;
