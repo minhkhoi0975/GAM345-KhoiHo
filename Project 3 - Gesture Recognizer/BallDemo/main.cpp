@@ -157,8 +157,19 @@ int main(int argc, char* argv[])
 
 		SDL_GetMouseState(&mx, &my);
 
+		// Holding mouse button
 		if(drawing)
 		{
+			/*
+			Vector2 mousePosition(mx, my);
+
+			if (drawingPoints.size() == 0 || mousePosition != drawingPoints[drawingPoints.size() - 1])
+			{
+				drawingPoints.push_back(mousePosition);
+				cout << "(" << mousePosition.x << "\t,\t" << mousePosition.y << ")" << endl;
+			}
+			*/
+
 			// Holding mouse button
 			drawingPoints.push_back(Vector2(mx, my));
 		}
