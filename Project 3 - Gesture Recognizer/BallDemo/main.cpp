@@ -544,7 +544,8 @@ int main(int argc, char* argv[])
 			"C: Toggle collisions\n"
 			"G: Toggle gravity\n"
 			"R: Reset\n"
-			"S: Save template");
+			"S: Save template\n"
+		    "T: Resample the stroke");
 
 		GPU_Flip(screen);
 
