@@ -1,6 +1,13 @@
+// $1 Single-Stroke Gesture Recognizer.
+// Programmer: Khoi Ho
+// Credits: The Cherno for the Save File dialog (https://www.youtube.com/watch?v=zn7N7zHgCcs&ab_channel=TheCherno)
+
+#include <fstream>
 #include <iostream>
 #include <vector>
+#include <windows.h>
 #include "SDL_gpu.h"
+#include "SDL_syswm.h"
 #include "NFont_gpu.h"
 #include "Random.h"
 #include "Vector2.h"
@@ -60,13 +67,253 @@ public:
 	}
 };
 
+// Open the save dialog. Return the file path.
+string SaveDialog(SDL_Window* window, const char* filter)
+{
+	// Get the info of the native window.
+	static SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(window, &wmInfo);
+
+	// Open the save file dialog.
+	OPENFILENAMEA ofn;
+	char szFile[260] = { 0 };
+	ZeroMemory(&ofn, sizeof(OPENFILENAME));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = wmInfo.info.win.window;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = filter;
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+	if (GetSaveFileNameA(&ofn) == TRUE)
+	{
+		return ofn.lpstrFile;
+	}
+	return std::string();
+}
+
+// Open a template file.
+vector<Vector2> OpenFile(const string& fileName)
+{
+	vector<Vector2> stroke;
+
+	fstream inputFile(fileName);
+	if (inputFile)
+	{
+		Vector2 position;
+
+		while (inputFile >> position.x >> position.y)
+		{
+			stroke.push_back(position);
+		}
+
+		inputFile.close();
+	}
+
+	return stroke;
+}
+
+// Save the stroke to a template file. Return true if the file is successfully saved.
+bool SaveFile(const string& fileName, const vector<Vector2>& stroke)
+{
+	fstream outputFile(fileName, ofstream::out | ofstream::trunc);
+
+	if (outputFile)
+	{
+		for (int i = 0; i < stroke.size(); i++)
+		{
+			outputFile << stroke[i].x << "\t" << stroke[i].y << endl;
+		}
+
+		outputFile.close();
+
+		return true;
+	}
+
+	return false;
+}
+
+// Find the total length of the lines between the points.
+float PathLength(const vector<Vector2>& points)
+{
+	float length = 0;
+	int pointCount = points.size();
+
+	for (int i = 1; i < pointCount; ++i)
+	{
+		length += Vector2::Distance(points[i - 1], points[i]);
+	}
+
+	return length;
+}
+
+// Resample the points.
+// n is the number of points after resample.
+vector<Vector2> Resample(vector<Vector2> points, int n = 64)
+{
+	vector<Vector2> newPoints;
+	newPoints.reserve(n);
+
+	float I = PathLength(points) / (n - 1);
+	float D = 0;
+
+	newPoints.push_back(points[0]);
+	for (int i = 1; i < points.size(); ++i)
+	{
+		float d = Vector2::Distance(points[i - 1], points[i]);
+
+		if (D + d >= I)
+		{
+			Vector2 newPoint;
+			newPoint.x = points[i - 1].x + ((I - D) / d) * (points[i].x - points[i - 1].x);
+			newPoint.y = points[i - 1].y + ((I - D) / d) * (points[i].y - points[i - 1].y);
+
+			newPoints.push_back(newPoint);
+
+			points.insert(points.begin() + i, newPoint);
+
+			D = 0;
+		}
+		else
+		{
+			D += d;
+		}
+	}
+
+	return newPoints;
+}
+
+// Get the centroid of the points.
+Vector2 Centroid(const vector<Vector2>& points)
+{
+	float sumX = 0;
+	float sumY = 0;
+	int pointCount = points.size();
+
+	for (int i = 0; i < pointCount; ++i)
+	{
+		sumX += points[i].x;
+		sumY += points[i].y;
+	}
+
+	return Vector2(sumX / pointCount, sumY / pointCount);
+}
+
+// Get the bounding box of the points.
+void BoundingBox(const vector<Vector2>& points, Vector2& topLeftCorner, Vector2& bottomRightCorner)
+{
+	float minX = points[0].x;
+	float minY = points[0].y;
+	float maxX = points[0].x;
+	float maxY = points[0].y;
+	int pointCount = points.size();
+
+	for (int i = 1; i < pointCount; ++i)
+	{
+		if (points[i].x < minX)
+		{
+			minX = points[i].x;
+		}
+		else if (points[i].x > maxX)
+		{
+			maxX = points[i].x;
+		}
+
+		if (points[i].y < minY)
+		{
+			minY = points[i].y;
+		}
+		else if (points[i].y > maxY)
+		{
+			maxY = points[i].y;
+		}
+	}
+
+	topLeftCorner.x = minX;
+	topLeftCorner.y = minY;
+
+	bottomRightCorner.x = maxX;
+	bottomRightCorner.y = maxY;
+}
+
+// Find the indicative angle from the centroid to the first point.
+float IndicativeAngle(const vector<Vector2>& points)
+{
+	Vector2 centroid = Centroid(points);
+	return atan2(centroid.y - points[0].y, centroid.x - points[0].x);
+}
+
+// Rotate all the points around their centroid by an angle.
+vector<Vector2> RotateBy(const vector<Vector2>& points, const float& angle)
+{
+	vector<Vector2> newPoints;
+
+	Vector2 centroid = Centroid(points);
+
+	for (const Vector2& point : points)
+	{
+		Vector2 newPoint;
+		newPoint.x = (point.x - centroid.x) * cos(angle) - (point.y - centroid.y) * sin(angle) + centroid.x;
+		newPoint.y = (point.x - centroid.x) * sin(angle) + (point.y - centroid.y) * cos(angle) + centroid.y;
+
+		newPoints.push_back(newPoint);
+	}
+
+	return newPoints;
+}
+
+vector<Vector2> ScaleTo(const vector<Vector2>& points, const int& size = 250)
+{
+	vector<Vector2> newPoints;
+
+	// Get the bounding box of the points.
+	Vector2 topLeftCorner;
+	Vector2 bottomRightCorner;
+	BoundingBox(points, topLeftCorner, bottomRightCorner);
+
+	// Get the size of the bounding box.
+	float width = bottomRightCorner.x - topLeftCorner.x;
+	float height = bottomRightCorner.y - topLeftCorner.y;
+
+	for (const Vector2& point : points)
+	{
+		Vector2 newPoint;
+		newPoint.x = point.x * size / width;
+		newPoint.y = point.y * size / height;
+
+		newPoints.push_back(newPoint);
+	}
+
+	return newPoints;
+}
+
+vector<Vector2> TranslateTo(const vector<Vector2>& points, const Vector2& origin = Vector2())
+{
+	vector<Vector2> newPoints;
+	newPoints.reserve(points.size());
+
+	Vector2 centroid = Centroid(points);
+
+	for (const Vector2& point : points)
+	{
+		Vector2 newPoint;
+		newPoint.x = point.x + origin.x - centroid.x;
+		newPoint.y = point.y + origin.y - centroid.y;
+
+		newPoints.push_back(newPoint);
+	}
+
+	return newPoints;
+}
+
 int main(int argc, char* argv[])
 {
 	GPU_Target* screen = GPU_Init(800, 600, GPU_DEFAULT_INIT_FLAGS);
 	if (screen == nullptr)
 		return 1;
 
-	SDL_SetWindowTitle(SDL_GetWindowFromID(screen->context->windowID), "Ball Demo");
+	SDL_SetWindowTitle(SDL_GetWindowFromID(screen->context->windowID), "$1 Single-Stroke Gesture Recognizer");
 	
 	NFont font;
 	font.load("FreeSans.ttf", 14);
@@ -132,6 +379,29 @@ int main(int argc, char* argv[])
 				{
 					balls.clear();
 				}
+
+				// Save the template to a file.
+				if (event.key.keysym.sym == SDLK_s)
+				{
+					string fileName = SaveDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
+
+					SaveFile(fileName, drawingPoints);
+
+					cout << fileName << endl;
+
+					// Test reading template.
+					vector<Vector2> stroke(OpenFile(fileName));
+					for (int i = 0; i < stroke.size(); ++i)
+					{
+						cout << stroke[i].x << " " << stroke[i].y << endl;
+					}
+				}
+
+				// Resample the stroke.
+				if (event.key.keysym.sym == SDLK_t)
+				{
+					drawingPoints = Resample(drawingPoints);
+				}
 			}
 			if (event.type == SDL_MOUSEBUTTONDOWN)
 			{
@@ -160,18 +430,16 @@ int main(int argc, char* argv[])
 		// Holding mouse button
 		if(drawing)
 		{
-			/*
 			Vector2 mousePosition(mx, my);
 
 			if (drawingPoints.size() == 0 || mousePosition != drawingPoints[drawingPoints.size() - 1])
 			{
 				drawingPoints.push_back(mousePosition);
-				cout << "(" << mousePosition.x << "\t,\t" << mousePosition.y << ")" << endl;
+				cout << mousePosition.x << " " << mousePosition.y << endl;
 			}
-			*/
-
+			
 			// Holding mouse button
-			drawingPoints.push_back(Vector2(mx, my));
+			//drawingPoints.push_back(Vector2(mx, my));
 		}
 
 		if (useGravity)
@@ -267,7 +535,8 @@ int main(int argc, char* argv[])
 			"-: Size down\n"
 			"C: Toggle collisions\n"
 			"G: Toggle gravity\n"
-			"R: Reset");
+			"R: Reset\n"
+			"S: Save template");
 
 		GPU_Flip(screen);
 
