@@ -401,6 +401,14 @@ int main(int argc, char* argv[])
 				if (event.key.keysym.sym == SDLK_t)
 				{
 					drawingPoints = Resample(drawingPoints);
+
+					/*
+					float indicativeAngle = IndicativeAngle(drawingPoints);
+					drawingPoints = RotateBy(drawingPoints, indicativeAngle);
+
+					drawingPoints = ScaleTo(drawingPoints);
+					drawingPoints = TranslateTo(drawingPoints);
+					*/
 				}
 			}
 			if (event.type == SDL_MOUSEBUTTONDOWN)
