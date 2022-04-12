@@ -5,6 +5,9 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <map>
+#include <limits>
+#include <filesystem>
 #include <windows.h>
 #include "SDL_gpu.h"
 #include "SDL_syswm.h"
@@ -13,62 +16,14 @@
 #include "Vector2.h"
 using namespace std;
 
-Random rng;
+const float PI = 2.0f * acosf(0.0f);
 
-class Ball
-{
-public:
-
-	Vector2 position;
-	Vector2 velocity;
-	float radius;
-	SDL_Color color;
-
-	bool outline;
-
-	Ball()
-	{
-		outline = true;
-
-		position = Vector2(rng.Float(0, 800), rng.Float(0, 600));
-		velocity = Vector2(rng.Float(-300, 300), rng.Float(-300, 300));
-
-		radius = rng.Float(10, 30);
-
-		color = GPU_MakeColor(rng.Integer(0, 256), rng.Integer(0, 256), rng.Integer(0, 256), 255);
-	}
-
-	Ball(float x, float y)
-	{
-		outline = true;
-
-		position = Vector2(x, y);
-		velocity = Vector2(rng.Float(-300, 300), rng.Float(-300, 300));
-
-		radius = rng.Float(10, 30);
-
-		color = GPU_MakeColor(rng.Integer(0, 256), rng.Integer(0, 256), rng.Integer(0, 256), 255);
-	}
-
-	void Tick(float dt)
-	{
-		position += velocity * dt;
-	}
-
-	void Draw(GPU_Target* target)
-	{
-		GPU_CircleFilled(target, position.x, position.y, radius, color);
-		if (outline)
-		{
-			GPU_SetLineThickness(5);
-			GPU_Circle(target, position.x, position.y, radius, GPU_MakeColor(0, 0, 0, 255));
-			GPU_SetLineThickness(1);
-		}
-	}
-};
+// ---------------------
+// File system utils
+// ---------------------
 
 // Open the save dialog. Return the file path.
-string SaveDialog(SDL_Window* window, const char* filter)
+string SaveFileDialog(SDL_Window* window, const char* filter)
 {
 	// Get the info of the native window.
 	static SDL_SysWMinfo wmInfo;
@@ -93,8 +48,34 @@ string SaveDialog(SDL_Window* window, const char* filter)
 	return std::string();
 }
 
+// Open the open file dialog. Return the file path.
+string OpenFileDialog(SDL_Window* window, const char* filter)
+{
+	// Get the info of the native window.
+	static SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(window, &wmInfo);
+
+	// Open the save file dialog.
+	OPENFILENAMEA ofn;
+	char szFile[260] = { 0 };
+	ZeroMemory(&ofn, sizeof(OPENFILENAME));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = wmInfo.info.win.window;
+	ofn.lpstrFile = szFile;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = filter;
+	ofn.nFilterIndex = 1;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+	if (GetOpenFileNameA(&ofn) == TRUE)
+	{
+		return ofn.lpstrFile;
+	}
+	return std::string();
+}
+
 // Open a template file.
-vector<Vector2> OpenFile(const string& fileName)
+vector<Vector2> OpenTemplateFile(const string& fileName)
 {
 	vector<Vector2> stroke;
 
@@ -134,55 +115,44 @@ bool SaveFile(const string& fileName, const vector<Vector2>& stroke)
 	return false;
 }
 
-// Find the total length of the lines between the points.
-float PathLength(const vector<Vector2>& points)
+// ---------------------------------------------------------------------
+// Get all files in a folder.
+// ---------------------------------------------------------------------
+
+vector<string> GetAllFileNames(const string& templateFolderPath, const string& filter = "*.*")
 {
-	float length = 0;
-	int pointCount = points.size();
+	vector<string> names;
 
-	for (int i = 1; i < pointCount; ++i)
+	/*
+	for (const auto& entry : std::filesystem::directory_iterator(templateFolderPath))
 	{
-		length += Vector2::Distance(points[i - 1], points[i]);
+		std::cout << entry.path() << std::endl;
 	}
+	*/
 
-	return length;
+	string searchPath = templateFolderPath + "/" + filter;
+
+	WIN32_FIND_DATA fd;
+	HANDLE hFind = ::FindFirstFile(searchPath.c_str(), &fd);
+	if (hFind != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+			// read all (real) files in current folder
+			// , delete '!' read other 2 default folder . and ..
+			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+			{
+				names.push_back(fd.cFileName);
+			}
+		} while (::FindNextFile(hFind, &fd));
+		::FindClose(hFind);
+	}
+	return names;
 }
 
-// Resample the points.
-// n is the number of points after resample.
-vector<Vector2> Resample(vector<Vector2> points, int n = 64)
-{
-	vector<Vector2> newPoints;
-	newPoints.reserve(n);
-
-	float I = PathLength(points) / (n - 1);
-	float D = 0;
-
-	newPoints.push_back(points[0]);
-	for (int i = 1; i < points.size(); ++i)
-	{
-		float d = Vector2::Distance(points[i - 1], points[i]);
-
-		if (D + d >= I)
-		{
-			Vector2 newPoint;
-			newPoint.x = points[i - 1].x + ((I - D) / d) * (points[i].x - points[i - 1].x);
-			newPoint.y = points[i - 1].y + ((I - D) / d) * (points[i].y - points[i - 1].y);
-
-			newPoints.push_back(newPoint);
-
-			points.insert(points.begin() + i, newPoint);
-
-			D = 0;
-		}
-		else
-		{
-			D += d;
-		}
-	}
-
-	return newPoints;
-}
+// -------------------------------------------
+// Utils
+// -------------------------------------------
 
 // Get the centroid of the points.
 Vector2 Centroid(const vector<Vector2>& points)
@@ -237,6 +207,70 @@ void BoundingBox(const vector<Vector2>& points, Vector2& topLeftCorner, Vector2&
 	bottomRightCorner.y = maxY;
 }
 
+// -------------------------------------------
+// Step 1
+// -------------------------------------------
+
+// Find the total length of the lines between the points.
+float PathLength(const vector<Vector2>& points)
+{
+	float length = 0;
+	int pointCount = points.size();
+
+	for (int i = 1; i < pointCount; ++i)
+	{
+		length += Vector2::Distance(points[i - 1], points[i]);
+	}
+
+	return length;
+}
+
+// Resample the points.
+// n is the number of points after resample.
+vector<Vector2> Resample(vector<Vector2> points, int n = 64)
+{
+	vector<Vector2> newPoints;
+	newPoints.reserve(n);
+
+	float I = PathLength(points) / (n - 1);
+	float D = 0;
+
+	newPoints.push_back(points[0]);
+	for (int i = 1; i < points.size(); ++i)
+	{
+		float d = Vector2::Distance(points[i - 1], points[i]);
+
+		if (D + d >= I)
+		{
+			Vector2 newPoint;
+			newPoint.x = points[i - 1].x + ((I - D) / d) * (points[i].x - points[i - 1].x);
+			newPoint.y = points[i - 1].y + ((I - D) / d) * (points[i].y - points[i - 1].y);
+
+			newPoints.push_back(newPoint);
+
+			points.insert(points.begin() + i, newPoint);
+
+			D = 0;
+		}
+		else
+		{
+			D += d;
+		}
+	}
+
+	// Fix the bug in which the size of newPoints does not match n.
+	if (newPoints.size() < n)
+	{
+		newPoints.push_back(points[points.size() - 1]);
+	}
+
+	return newPoints;
+}
+
+// -------------------------------------------
+// Step 2
+// -------------------------------------------
+
 // Find the indicative angle from the centroid to the first point.
 float IndicativeAngle(const vector<Vector2>& points)
 {
@@ -262,6 +296,10 @@ vector<Vector2> RotateBy(const vector<Vector2>& points, const float& angle)
 
 	return newPoints;
 }
+
+// -------------------------------------------
+// Step 3
+// -------------------------------------------
 
 vector<Vector2> ScaleTo(const vector<Vector2>& points, const int& size = 250)
 {
@@ -307,6 +345,93 @@ vector<Vector2> TranslateTo(const vector<Vector2>& points, const Vector2& origin
 	return newPoints;
 }
 
+// -------------------------------------------
+// Step 4
+// -------------------------------------------
+
+// Find the average distance between 2 repsective points of two strokes.
+float PathDistance(const vector<Vector2>& points1, const vector<Vector2>& points2)
+{
+	if (points1.size() != points2.size())
+	{
+		throw exception("Error: Two strokes have different sizes. Make sure to resample them before finding the path distance.");
+	}
+
+	float distance = 0;
+
+	for (int i = 0; i < points1.size(); ++i)
+	{
+		distance += Vector2::Distance(points1[i], points2[i]);
+	}
+
+	return distance / points1.size();
+}
+
+float DistanceAtAngle(const vector<Vector2>& points1, const vector<Vector2>& points2, const float& angle)
+{
+	vector<Vector2> newPoints = RotateBy(points1, angle);
+
+	float distance = PathDistance(newPoints, points2);
+
+	return distance;
+}
+
+float DistanceAtBestAngle(const vector<Vector2>& points1, const vector<Vector2>& points2, float angleAlpha, float angleBeta, const float& angleDelta)
+{
+	static const float phi = 0.5 * (-1 + sqrt(5));
+
+	float x1 = phi * angleAlpha + (1 - phi) * angleBeta;
+	float f1 = DistanceAtAngle(points1, points2, x1);
+
+	float x2 = (1 - phi) * angleAlpha + phi * angleBeta;
+	float f2 = DistanceAtAngle(points1, points2, x2);
+
+	while (abs(angleAlpha - angleBeta) > angleDelta)
+	{
+		if (f1 < f2)
+		{
+			angleBeta = x2;
+			x2 = x1;
+			f2 = f1;
+			x1 = phi * angleAlpha + (1 - phi) * angleBeta;
+			f1 = DistanceAtAngle(points1, points2, x1);
+		}
+		else
+		{
+			angleAlpha = x1;
+			x1 = x2;
+			f1 = f2;
+			x2 = (1 - phi) * angleAlpha + phi * angleBeta;
+			f2 = DistanceAtAngle(points1, points2, x2);
+		}
+	}
+
+	return f1 < f2 ? f1 : f2;
+}
+
+pair<string, float> Recognize(const vector<Vector2>& points, const map<string, vector<Vector2>>& strokeTemplates, const float& size = 250)
+{
+	pair<string, float> matchingStroke;
+
+	float b = numeric_limits<float>::infinity();
+
+	for (const pair<string, vector<Vector2>>& strokeTemplate : strokeTemplates)
+	{
+		float distance = DistanceAtBestAngle(points, strokeTemplate.second, -0.25f * PI, 0.25f * PI, PI / 90.0f);
+		
+		if (distance < b)
+		{
+			b = distance;
+			matchingStroke.first = strokeTemplate.first;
+		}
+
+		float score = 1 - b / 0.5f * sqrt(size * size + size * size);
+		matchingStroke.second = score;
+	}
+
+	return matchingStroke;
+}
+
 int main(int argc, char* argv[])
 {
 	GPU_Target* screen = GPU_Init(800, 600, GPU_DEFAULT_INIT_FLAGS);
@@ -329,11 +454,6 @@ int main(int argc, char* argv[])
 	bool drawing = false;
 	vector<Vector2> drawingPoints;
 
-	vector<Ball> balls;
-	bool useOutlines = true;
-	bool useCollisions = false;
-	bool useGravity = false;
-
 	/*for (int i = 0; i < 3000; ++i)
 	{
 		balls.emplace_back();
@@ -351,66 +471,45 @@ int main(int argc, char* argv[])
 			{
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 					done = true;
-				if (event.key.keysym.sym == SDLK_SPACE)
-				{
-					useOutlines = !useOutlines;
-					for (auto& b : balls)
-						b.outline = useOutlines;
-				}
-				if (event.key.keysym.sym == SDLK_EQUALS)
-				{
-					for (auto& b : balls)
-						b.radius *= 1.3f;
-				}
-				if (event.key.keysym.sym == SDLK_MINUS)
-				{
-					for (auto& b : balls)
-						b.radius /= 1.3f;
-				}
-				if (event.key.keysym.sym == SDLK_c)
-				{
-					useCollisions = !useCollisions;
-				}
-				if (event.key.keysym.sym == SDLK_g)
-				{
-					useGravity = !useGravity;
-				}
-				if (event.key.keysym.sym == SDLK_r)
-				{
-					balls.clear();
-				}
 
 				// Save the template to a file.
 				if (event.key.keysym.sym == SDLK_s)
 				{
-					string fileName = SaveDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
+					string fileName = SaveFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
 
 					SaveFile(fileName, drawingPoints);
 
 					cout << fileName << endl;
 
 					// Test reading template.
-					vector<Vector2> stroke(OpenFile(fileName));
+					vector<Vector2> stroke(OpenTemplateFile(fileName));
 					for (int i = 0; i < stroke.size(); ++i)
 					{
 						cout << stroke[i].x << " " << stroke[i].y << endl;
 					}
 				}
 
+				// Open an existing template.
+				if (event.key.keysym.sym == SDLK_o)
+				{
+					string fileName = OpenFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
+					cout << fileName << endl;
+
+					drawingPoints.clear();
+					drawingPoints = OpenTemplateFile(fileName);
+				}
+
 				// Resample the stroke.
 				if (event.key.keysym.sym == SDLK_t)
 				{
 					drawingPoints = Resample(drawingPoints);
-
-					/*
-					float indicativeAngle = IndicativeAngle(drawingPoints);
-					drawingPoints = RotateBy(drawingPoints, indicativeAngle);
-
+					drawingPoints = RotateBy(drawingPoints, -IndicativeAngle(drawingPoints));
 					drawingPoints = ScaleTo(drawingPoints);
-					drawingPoints = TranslateTo(drawingPoints);
-					*/
+					drawingPoints = TranslateTo(drawingPoints, Vector2(400, 300));
 				}
 			}
+
+			// Start drawing.
 			if (event.type == SDL_MOUSEBUTTONDOWN)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT)
@@ -418,17 +517,62 @@ int main(int argc, char* argv[])
 					drawing = true;
 					drawingPoints.clear();
 				}
-				if (event.button.button == SDL_BUTTON_RIGHT)
-				{
-					balls.emplace_back(event.button.x, event.button.y);
-				}
 			}
+
+			// Stop drawing.
 			if (event.type == SDL_MOUSEBUTTONUP)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
 					// TODO: Gesture recognition
 					drawing = false;
+
+					// Read the stroke templates.
+					map<string, vector<Vector2>> strokes;
+
+					for (const string& fileName : GetAllFileNames("Stroke Templates", "*.stroke"))
+					{
+						strokes[fileName] = OpenTemplateFile("Stroke Templates/" + fileName);
+
+						/*
+						for (int i = 0; i < strokes[fileName].size(); ++i)
+						{
+							Vector2 vector = strokes[fileName][i];
+							cout << vector.x << "\n" << vector.y << endl;
+						}
+						*/
+					}
+
+					if (strokes.size() > 0)
+					{
+
+						// Process the drawn stroke.
+						vector<Vector2> drawingPointsCopy = drawingPoints;
+						drawingPointsCopy = Resample(drawingPointsCopy);
+						drawingPointsCopy = RotateBy(drawingPointsCopy, -IndicativeAngle(drawingPointsCopy));
+						drawingPointsCopy = ScaleTo(drawingPointsCopy);
+						drawingPointsCopy = TranslateTo(drawingPointsCopy);
+
+						cout << "Drawing stroke size: " << drawingPointsCopy.size() << endl;
+
+						// Process the strokes from the template files.
+						map<string, vector<Vector2>>::iterator it = strokes.begin();
+						while (it != strokes.end())
+						{
+							it->second = Resample(it->second);
+							it->second = RotateBy(it->second, -IndicativeAngle(it->second));
+							it->second = ScaleTo(it->second);
+							it->second = TranslateTo(it->second);
+
+							cout << it->first << " size: " << it->second.size() << endl;
+
+							++it;
+						}
+
+						// Recognize the pattern.
+						pair<string, float> matchingStroke = Recognize(drawingPointsCopy, strokes);
+						cout << "Matching stroke: " << matchingStroke.first << "\t" << "Score: " << matchingStroke.second << endl;
+					}
 				}
 			}
 		}
@@ -450,80 +594,7 @@ int main(int argc, char* argv[])
 			//drawingPoints.push_back(Vector2(mx, my));
 		}
 
-		if (useGravity)
-		{
-			for (auto& b : balls)
-				b.velocity.y += 1000.0f*dt;
-		}
-
-		for (auto& b : balls)
-			b.Tick(dt);
-
-		if (useCollisions)
-		{
-			for (size_t i = 0; i < balls.size() - 1; ++i)
-			{
-				for (size_t j = i + 1; j < balls.size(); ++j)
-				{
-					float dx = balls[j].position.x - balls[i].position.x;
-					float dy = balls[j].position.y - balls[i].position.y;
-					float r = balls[i].radius + balls[j].radius;
-					if (fabsf(r) > 0.01f && dx * dx + dy * dy < r * r)
-					{
-						Vector2 normal(dx, dy);
-						normal.Normalize();
-
-						Vector2 tangent(-normal.y, normal.x);
-						float dist = sqrtf(dx * dx + dy * dy) - r;
-						balls[i].position += normal * dist/2;
-						balls[j].position -= normal * dist/2;
-
-						Vector2 biVel(balls[i].velocity.Dot(normal), balls[i].velocity.Dot(tangent));
-						Vector2 bjVel(balls[j].velocity.Dot(normal), balls[j].velocity.Dot(tangent));
-						
-						float m1 = balls[i].radius;
-						float m2 = balls[j].radius;
-						float biFinalVel = (m1 - m2)/(m1 + m2) * biVel.x + 2*m2/(m1 + m2) * bjVel.x;
-						float bjFinalVel = (m2 - m1)/(m1 + m2) * bjVel.x + 2*m1/(m1 + m2) * biVel.x;
-						biVel.x = biFinalVel;
-						bjVel.x = bjFinalVel;
-						balls[i].velocity = biVel.x * normal + biVel.y * tangent;
-						balls[j].velocity = bjVel.x * normal + bjVel.y * tangent;
-					}
-				}
-			}
-		}
-
-		for (auto& b : balls)
-		{
-			if (b.position.x < b.radius)
-			{
-				b.position.x = b.radius;
-				b.velocity.x = -b.velocity.x;
-			}
-			if (b.position.y < b.radius)
-			{
-				b.position.y = b.radius;
-				b.velocity.y = -b.velocity.y;
-			}
-			if (b.position.x > screen->w - b.radius)
-			{
-				b.position.x = screen->w - b.radius;
-				b.velocity.x = -b.velocity.x;
-			}
-			if (b.position.y > screen->h - b.radius)
-			{
-				b.position.y = screen->h - b.radius;
-				b.velocity.y = -b.velocity.y;
-			}
-		}
-
-
-
 		GPU_ClearRGB(screen, 255, 255, 255);
-
-		for (auto& b : balls)
-			b.Draw(screen);
 
 		// Draw lines
 		GPU_SetLineThickness(5.0f);
@@ -537,14 +608,8 @@ int main(int argc, char* argv[])
 
 		font.draw(screen, screen->w - 50.0f, 10.0f, NFont::AlignEnum::RIGHT, 
 			"Left click: Draw gesture\n"
-			"Right click: Create ball\n"
-			"Space: Toggle outline\n"
-			"+: Size up\n"
-			"-: Size down\n"
-			"C: Toggle collisions\n"
-			"G: Toggle gravity\n"
-			"R: Reset\n"
 			"S: Save template\n"
+			"O: Open an existing template\n"
 		    "T: Resample the stroke");
 
 		GPU_Flip(screen);
