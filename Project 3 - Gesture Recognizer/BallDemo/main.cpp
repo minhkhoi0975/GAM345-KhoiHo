@@ -91,6 +91,10 @@ vector<Vector2> OpenTemplateFile(const string& fileName)
 
 		inputFile.close();
 	}
+	else
+	{
+		cerr << "Cannot open the template file!" << endl;
+	}
 
 	return stroke;
 }
@@ -527,51 +531,58 @@ int main(int argc, char* argv[])
 					// TODO: Gesture recognition
 					drawing = false;
 
-					// Read the stroke templates.
-					map<string, vector<Vector2>> strokes;
-
-					for (const string& fileName : GetAllFileNames("Stroke Templates", "*.stroke"))
+					if (drawingPoints.size() < 10)
 					{
-						strokes[fileName] = OpenTemplateFile("Stroke Templates/" + fileName);
-
-						/*
-						for (int i = 0; i < strokes[fileName].size(); ++i)
-						{
-							Vector2 vector = strokes[fileName][i];
-							cout << vector.x << "\n" << vector.y << endl;
-						}
-						*/
+						cout << "The stroke is too short." << endl;
 					}
-
-					if (strokes.size() > 0)
+					else
 					{
+						// Read the stroke templates.
+						map<string, vector<Vector2>> strokes;
 
-						// Process the drawn stroke.
-						vector<Vector2> drawingPointsCopy = drawingPoints;
-						drawingPointsCopy = Resample(drawingPointsCopy);
-						drawingPointsCopy = RotateBy(drawingPointsCopy, -IndicativeAngle(drawingPointsCopy));
-						drawingPointsCopy = ScaleTo(drawingPointsCopy);
-						drawingPointsCopy = TranslateTo(drawingPointsCopy);
-
-						cout << "Drawing stroke size: " << drawingPointsCopy.size() << endl;
-
-						// Process the strokes from the template files.
-						map<string, vector<Vector2>>::iterator it = strokes.begin();
-						while (it != strokes.end())
+						for (const string& fileName : GetAllFileNames("Stroke Templates", "*.stroke"))
 						{
-							it->second = Resample(it->second);
-							it->second = RotateBy(it->second, -IndicativeAngle(it->second));
-							it->second = ScaleTo(it->second);
-							it->second = TranslateTo(it->second);
+							strokes[fileName] = OpenTemplateFile("Stroke Templates/" + fileName);
 
-							cout << it->first << " size: " << it->second.size() << endl;
-
-							++it;
+							/*
+							for (int i = 0; i < strokes[fileName].size(); ++i)
+							{
+								Vector2 vector = strokes[fileName][i];
+								cout << vector.x << "\n" << vector.y << endl;
+							}
+							*/
 						}
 
-						// Recognize the pattern.
-						pair<string, float> matchingStroke = Recognize(drawingPointsCopy, strokes);
-						cout << "Matching stroke: " << matchingStroke.first << "\t" << "Score: " << matchingStroke.second << endl;
+						if (strokes.size() > 0)
+						{
+
+							// Process the drawn stroke.
+							vector<Vector2> drawingPointsCopy = drawingPoints;
+							drawingPointsCopy = Resample(drawingPointsCopy);
+							drawingPointsCopy = RotateBy(drawingPointsCopy, -IndicativeAngle(drawingPointsCopy));
+							drawingPointsCopy = ScaleTo(drawingPointsCopy);
+							drawingPointsCopy = TranslateTo(drawingPointsCopy);
+
+							cout << "Drawing stroke size: " << drawingPointsCopy.size() << endl;
+
+							// Process the strokes from the template files.
+							map<string, vector<Vector2>>::iterator it = strokes.begin();
+							while (it != strokes.end())
+							{
+								it->second = Resample(it->second);
+								it->second = RotateBy(it->second, -IndicativeAngle(it->second));
+								it->second = ScaleTo(it->second);
+								it->second = TranslateTo(it->second);
+
+								cout << it->first << " size: " << it->second.size() << endl;
+
+								++it;
+							}
+
+							// Recognize the pattern.
+							pair<string, float> matchingStroke = Recognize(drawingPointsCopy, strokes);
+							cout << "Matching stroke: " << matchingStroke.first << "\t" << "Score: " << matchingStroke.second << endl;
+						}
 					}
 				}
 			}
