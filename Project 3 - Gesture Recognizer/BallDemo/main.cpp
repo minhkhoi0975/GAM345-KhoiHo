@@ -8,6 +8,7 @@
 #include <map>
 #include <limits>
 #include <filesystem>
+#include <sstream>
 #include <windows.h>
 #include "SDL_gpu.h"
 #include "SDL_syswm.h"
@@ -45,7 +46,7 @@ string SaveFileDialog(SDL_Window* window, const char* filter)
 	{
 		return ofn.lpstrFile;
 	}
-	return std::string();
+	return string();
 }
 
 // Open the open file dialog. Return the file path.
@@ -71,7 +72,7 @@ string OpenFileDialog(SDL_Window* window, const char* filter)
 	{
 		return ofn.lpstrFile;
 	}
-	return std::string();
+	return string();
 }
 
 // Open a template file.
@@ -438,30 +439,30 @@ pair<string, float> Recognize(const vector<Vector2>& points, const map<string, v
 
 int main(int argc, char* argv[])
 {
+	// Initialize SDL_GPU.
 	GPU_Target* screen = GPU_Init(800, 600, GPU_DEFAULT_INIT_FLAGS);
 	if (screen == nullptr)
 		return 1;
 
+	// Create a window.
 	SDL_SetWindowTitle(SDL_GetWindowFromID(screen->context->windowID), "$1 Single-Stroke Gesture Recognizer");
 	
+	// Load a font to display text on screen.
 	NFont font;
 	font.load("FreeSans.ttf", 14);
 
 	const Uint8* keystates = SDL_GetKeyboardState(nullptr);
 
-	int mx = 0, my = 0;
-
-	float dt = 0.0f;
-	Uint32 startTime = SDL_GetTicks();
-	Uint32 endTime = 0;
+	// Coordinates of the mouse.
+	int mouseX = 0, mouseY = 0;
 
 	bool drawing = false;
 	vector<Vector2> drawingPoints;
 
-	/*for (int i = 0; i < 3000; ++i)
-	{
-		balls.emplace_back();
-	}*/
+	// The stroke that matches the drawn stroke.
+	// + The first value is the file name of the matching stroke.
+	// + The second value is the score.
+	pair<string, float> matchingStroke;
 
 	SDL_Event event;
 	bool done = false;
@@ -473,27 +474,40 @@ int main(int argc, char* argv[])
 				done = true;
 			if (event.type == SDL_KEYDOWN)
 			{
+				// Press ESC to exit the program.
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 					done = true;
 
-				// Save the template to a file.
+				// Press S to save the template to a file.
 				if (event.key.keysym.sym == SDLK_s)
 				{
-					string fileName = SaveFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
-
-					SaveFile(fileName, drawingPoints);
-
-					cout << fileName << endl;
-
-					// Test reading template.
-					vector<Vector2> stroke(OpenTemplateFile(fileName));
-					for (int i = 0; i < stroke.size(); ++i)
+					// Cannot save the drawn stroke if it is too short.
+					if (drawingPoints.size() < 10)
 					{
-						cout << stroke[i].x << " " << stroke[i].y << endl;
+						cout << "Cannot save the stroke: The stroke is too short." << endl;
+					}
+					else
+					{
+						string fileName = SaveFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
+
+
+
+						SaveFile(fileName, drawingPoints);
+
+						/*
+						// Test reading template.
+						cout << fileName << endl;
+
+						vector<Vector2> stroke(OpenTemplateFile(fileName));
+						for (int i = 0; i < stroke.size(); ++i)
+						{
+							cout << stroke[i].x << " " << stroke[i].y << endl;
+						}
+						*/
 					}
 				}
 
-				// Open an existing template.
+				// Press O to open an existing template.
 				if (event.key.keysym.sym == SDLK_o)
 				{
 					string fileName = OpenFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
@@ -503,7 +517,7 @@ int main(int argc, char* argv[])
 					drawingPoints = OpenTemplateFile(fileName);
 				}
 
-				// Resample the stroke.
+				// Press T to resample the drawn stroke.
 				if (event.key.keysym.sym == SDLK_t)
 				{
 					drawingPoints = Resample(drawingPoints);
@@ -513,7 +527,7 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			// Start drawing.
+			// Hold left mouse to draw.
 			if (event.type == SDL_MOUSEBUTTONDOWN)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT)
@@ -523,14 +537,14 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			// Stop drawing.
+			// Release left mouse to stop drawing.
 			if (event.type == SDL_MOUSEBUTTONUP)
 			{
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
-					// TODO: Gesture recognition
 					drawing = false;
 
+					// Cannot recognize the drawn stroke if it is too short.
 					if (drawingPoints.size() < 10)
 					{
 						cout << "The stroke is too short." << endl;
@@ -543,14 +557,6 @@ int main(int argc, char* argv[])
 						for (const string& fileName : GetAllFileNames("Stroke Templates", "*.stroke"))
 						{
 							strokes[fileName] = OpenTemplateFile("Stroke Templates/" + fileName);
-
-							/*
-							for (int i = 0; i < strokes[fileName].size(); ++i)
-							{
-								Vector2 vector = strokes[fileName][i];
-								cout << vector.x << "\n" << vector.y << endl;
-							}
-							*/
 						}
 
 						if (strokes.size() > 0)
@@ -563,7 +569,7 @@ int main(int argc, char* argv[])
 							drawingPointsCopy = ScaleTo(drawingPointsCopy);
 							drawingPointsCopy = TranslateTo(drawingPointsCopy);
 
-							cout << "Drawing stroke size: " << drawingPointsCopy.size() << endl;
+							// cout << "Drawing stroke size: " << drawingPointsCopy.size() << endl;
 
 							// Process the strokes from the template files.
 							map<string, vector<Vector2>>::iterator it = strokes.begin();
@@ -574,13 +580,13 @@ int main(int argc, char* argv[])
 								it->second = ScaleTo(it->second);
 								it->second = TranslateTo(it->second);
 
-								cout << it->first << " size: " << it->second.size() << endl;
+								// cout << it->first << " size: " << it->second.size() << endl;
 
 								++it;
 							}
 
 							// Recognize the pattern.
-							pair<string, float> matchingStroke = Recognize(drawingPointsCopy, strokes);
+							matchingStroke = Recognize(drawingPointsCopy, strokes);
 							cout << "Matching stroke: " << matchingStroke.first << "\t" << "Score: " << matchingStroke.second << endl;
 						}
 					}
@@ -588,24 +594,28 @@ int main(int argc, char* argv[])
 			}
 		}
 
-		SDL_GetMouseState(&mx, &my);
+		SDL_GetMouseState(&mouseX, &mouseY);
 
 		// Holding mouse button
 		if(drawing)
 		{
-			Vector2 mousePosition(mx, my);
+			Vector2 mousePosition(mouseX, mouseY);
 
+			// Don't at the latest cursor position to the array if it is not moving.
 			if (drawingPoints.size() == 0 || mousePosition != drawingPoints[drawingPoints.size() - 1])
 			{
 				drawingPoints.push_back(mousePosition);
-				cout << mousePosition.x << " " << mousePosition.y << endl;
+				//cout << mousePosition.x << " " << mousePosition.y << endl;
 			}
-			
-			// Holding mouse button
-			//drawingPoints.push_back(Vector2(mx, my));
 		}
 
 		GPU_ClearRGB(screen, 255, 255, 255);
+
+		// Draw the starting point.
+		if (drawingPoints.size() > 0)
+		{
+			GPU_Circle(screen, drawingPoints[0].x, drawingPoints[0].y, 5.0f, GPU_MakeColor(0, 0, 255, 255));
+		}
 
 		// Draw lines
 		GPU_SetLineThickness(5.0f);
@@ -617,19 +627,30 @@ int main(int argc, char* argv[])
 		}
 		GPU_SetLineThickness(1.0f);
 
+		// Draw the ending point.
+		if (drawingPoints.size() > 0)
+		{
+			const int lastPoint = drawingPoints.size() - 1;
+			GPU_Circle(screen, drawingPoints[lastPoint].x, drawingPoints[lastPoint].y, 5.0f, GPU_MakeColor(0, 122, 0, 255));
+		}
+
 		font.draw(screen, screen->w - 50.0f, 10.0f, NFont::AlignEnum::RIGHT, 
 			"Left click: Draw gesture\n"
 			"S: Save template\n"
-			"O: Open an existing template\n"
+			"O: View an existing template\n"
 		    "T: Resample the stroke");
+
+		
+		if (!matchingStroke.first.empty())
+		{
+			stringstream matchingStrokeSS;
+			matchingStrokeSS << "Matching stroke: " << matchingStroke.first;
+			font.draw(screen, 10.0f, screen->h - 20, NFont::AlignEnum::LEFT, matchingStrokeSS.str().c_str());
+		}
 
 		GPU_Flip(screen);
 
 		SDL_Delay(1);
-
-		endTime = SDL_GetTicks();
-		dt = (endTime - startTime) / 1000.0f;
-		startTime = endTime;
 	}
 
 	font.free();

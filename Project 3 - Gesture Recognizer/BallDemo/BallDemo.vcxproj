@@ -15,7 +15,7 @@
     <ProjectGuid>{A557CC40-560C-4111-833C-514079A18151}</ProjectGuid>
     <RootNamespace>SDLbase</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>BallDemo</ProjectName>
+    <ProjectName>GestureRecognizer</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
