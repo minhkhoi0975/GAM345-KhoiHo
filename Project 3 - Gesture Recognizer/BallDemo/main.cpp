@@ -325,6 +325,7 @@ float DistanceAtBestAngle(const vector<Vector2>& points1, const vector<Vector2>&
 	return f1 < f2 ? f1 : f2;
 }
 
+// Find the template that matches the drawn stroke.
 pair<string, float> Recognize(const vector<Vector2>& points, const map<string, vector<Vector2>>& strokeTemplates, const float& size = 250)
 {
 	pair<string, float> matchingStroke;
@@ -556,7 +557,9 @@ int main(int argc, char* argv[])
 			"Left click: Draw gesture\n"
 			"S: Save template\n"
 			"O: View an existing template\n"
-		    "T: Resample the stroke");
+		    "T: Resample the stroke\n"
+			"P: Change the stroke template folder"
+		);
 
 		
 		if (!matchingStroke.first.empty())
