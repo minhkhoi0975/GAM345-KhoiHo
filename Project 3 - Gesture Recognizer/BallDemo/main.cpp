@@ -1,6 +1,6 @@
 // $1 Single-Stroke Gesture Recognizer.
 // Programmer: Khoi Ho
-// Credits: The Cherno for the Save File dialog (https://www.youtube.com/watch?v=zn7N7zHgCcs&ab_channel=TheCherno)
+
 
 #include <fstream>
 #include <iostream>
@@ -9,74 +9,18 @@
 #include <limits>
 #include <filesystem>
 #include <sstream>
-#include <windows.h>
 #include "SDL_gpu.h"
 #include "SDL_syswm.h"
 #include "NFont_gpu.h"
 #include "Random.h"
 #include "Vector2.h"
+#include "utils.h"
 using namespace std;
 
 const float PI = 2.0f * acosf(0.0f);
 
-// ---------------------
-// File system utils
-// ---------------------
-
-// Open the save dialog. Return the file path.
-string SaveFileDialog(SDL_Window* window, const char* filter)
-{
-	// Get the info of the native window.
-	static SDL_SysWMinfo wmInfo;
-	SDL_VERSION(&wmInfo.version);
-	SDL_GetWindowWMInfo(window, &wmInfo);
-
-	// Open the save file dialog.
-	OPENFILENAMEA ofn;
-	char szFile[260] = { 0 };
-	ZeroMemory(&ofn, sizeof(OPENFILENAME));
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = wmInfo.info.win.window;
-	ofn.lpstrFile = szFile;
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = filter;
-	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-	if (GetSaveFileNameA(&ofn) == TRUE)
-	{
-		return ofn.lpstrFile;
-	}
-	return string();
-}
-
-// Open the open file dialog. Return the file path.
-string OpenFileDialog(SDL_Window* window, const char* filter)
-{
-	// Get the info of the native window.
-	static SDL_SysWMinfo wmInfo;
-	SDL_VERSION(&wmInfo.version);
-	SDL_GetWindowWMInfo(window, &wmInfo);
-
-	// Open the save file dialog.
-	OPENFILENAMEA ofn;
-	char szFile[260] = { 0 };
-	ZeroMemory(&ofn, sizeof(OPENFILENAME));
-	ofn.lStructSize = sizeof(OPENFILENAME);
-	ofn.hwndOwner = wmInfo.info.win.window;
-	ofn.lpstrFile = szFile;
-	ofn.nMaxFile = sizeof(szFile);
-	ofn.lpstrFilter = filter;
-	ofn.nFilterIndex = 1;
-	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-	if (GetOpenFileNameA(&ofn) == TRUE)
-	{
-		return ofn.lpstrFile;
-	}
-	return string();
-}
-
-// Open a template file.
-vector<Vector2> OpenTemplateFile(const string& fileName)
+// Open a stroke template.
+vector<Vector2> OpenTemplate(const string& fileName)
 {
 	vector<Vector2> stroke;
 
@@ -101,7 +45,7 @@ vector<Vector2> OpenTemplateFile(const string& fileName)
 }
 
 // Save the stroke to a template file. Return true if the file is successfully saved.
-bool SaveFile(const string& fileName, const vector<Vector2>& stroke)
+bool SaveTemplate(const string& fileName, const vector<Vector2>& stroke)
 {
 	fstream outputFile(fileName, ofstream::out | ofstream::trunc);
 
@@ -120,43 +64,8 @@ bool SaveFile(const string& fileName, const vector<Vector2>& stroke)
 	return false;
 }
 
-// ---------------------------------------------------------------------
-// Get all files in a folder.
-// ---------------------------------------------------------------------
-
-vector<string> GetAllFileNames(const string& templateFolderPath, const string& filter = "*.*")
-{
-	vector<string> names;
-
-	/*
-	for (const auto& entry : std::filesystem::directory_iterator(templateFolderPath))
-	{
-		std::cout << entry.path() << std::endl;
-	}
-	*/
-
-	string searchPath = templateFolderPath + "/" + filter;
-
-	WIN32_FIND_DATA fd;
-	HANDLE hFind = ::FindFirstFile(searchPath.c_str(), &fd);
-	if (hFind != INVALID_HANDLE_VALUE)
-	{
-		do
-		{
-			// read all (real) files in current folder
-			// , delete '!' read other 2 default folder . and ..
-			if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-			{
-				names.push_back(fd.cFileName);
-			}
-		} while (::FindNextFile(hFind, &fd));
-		::FindClose(hFind);
-	}
-	return names;
-}
-
 // -------------------------------------------
-// Utils
+// Common functions for the recognizing algorithm.
 // -------------------------------------------
 
 // Get the centroid of the points.
@@ -231,13 +140,13 @@ float PathLength(const vector<Vector2>& points)
 }
 
 // Resample the points.
-// n is the number of points after resample.
-vector<Vector2> Resample(vector<Vector2> points, int n = 64)
+// numPoints is the number of points after resample.
+vector<Vector2> Resample(vector<Vector2> points, int numPoints = 64)
 {
 	vector<Vector2> newPoints;
-	newPoints.reserve(n);
+	newPoints.reserve(numPoints);
 
-	float I = PathLength(points) / (n - 1);
+	float I = PathLength(points) / (numPoints - 1);
 	float D = 0;
 
 	newPoints.push_back(points[0]);
@@ -264,7 +173,7 @@ vector<Vector2> Resample(vector<Vector2> points, int n = 64)
 	}
 
 	// Fix the bug in which the size of newPoints does not match n.
-	if (newPoints.size() < n)
+	if (newPoints.size() < numPoints)
 	{
 		newPoints.push_back(points[points.size() - 1]);
 	}
@@ -459,6 +368,12 @@ int main(int argc, char* argv[])
 	bool drawing = false;
 	vector<Vector2> drawingPoints;
 
+	// The path of the folder that contains the stroke templates.
+	string strokeTemplatePath = argv[0];
+	strokeTemplatePath = strokeTemplatePath.substr(0, strokeTemplatePath.find_last_of("\\/"));
+	strokeTemplatePath.append("\\Stroke Templates");
+	cout << strokeTemplatePath << endl;
+
 	// The stroke that matches the drawn stroke.
 	// + The first value is the file name of the matching stroke.
 	// + The second value is the score.
@@ -490,20 +405,16 @@ int main(int argc, char* argv[])
 					{
 						string fileName = SaveFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
 
-
-
-						SaveFile(fileName, drawingPoints);
-
-						/*
-						// Test reading template.
-						cout << fileName << endl;
-
-						vector<Vector2> stroke(OpenTemplateFile(fileName));
-						for (int i = 0; i < stroke.size(); ++i)
+						// If the file name does not have the extension at the end, add the exetension.
+						const string fileExtension = ".stroke";
+						if (fileName.compare(fileName.length() - fileExtension.length(), fileExtension.length(), fileExtension) != 0)
 						{
-							cout << stroke[i].x << " " << stroke[i].y << endl;
+							fileName.append(fileExtension);
 						}
-						*/
+
+						cout << "Saving the template to file: " << fileName << endl;
+
+						SaveTemplate(fileName, drawingPoints);
 					}
 				}
 
@@ -514,7 +425,7 @@ int main(int argc, char* argv[])
 					cout << fileName << endl;
 
 					drawingPoints.clear();
-					drawingPoints = OpenTemplateFile(fileName);
+					drawingPoints = OpenTemplate(fileName);
 				}
 
 				// Press T to resample the drawn stroke.
@@ -524,6 +435,13 @@ int main(int argc, char* argv[])
 					drawingPoints = RotateBy(drawingPoints, -IndicativeAngle(drawingPoints));
 					drawingPoints = ScaleTo(drawingPoints);
 					drawingPoints = TranslateTo(drawingPoints, Vector2(400, 300));
+				}
+
+				// Press P to change where the stroke template folder is.
+				if (event.key.keysym.sym == SDLK_p)
+				{
+					strokeTemplatePath = BrowseFolder(argv[0]);
+					cout << "Stroke template folder has been changed to: " << strokeTemplatePath << endl;
 				}
 			}
 
@@ -553,23 +471,23 @@ int main(int argc, char* argv[])
 					{
 						// Read the stroke templates.
 						map<string, vector<Vector2>> strokes;
-
-						for (const string& fileName : GetAllFileNames("Stroke Templates", "*.stroke"))
+						for (const string& fileName : GetAllFileNames(strokeTemplatePath, "*.stroke"))
 						{
-							strokes[fileName] = OpenTemplateFile("Stroke Templates/" + fileName);
+							strokes[fileName] = OpenTemplate("Stroke Templates/" + fileName);
 						}
 
-						if (strokes.size() > 0)
+						if (strokes.size() == 0)
 						{
-
+							cout << "The folder " << strokeTemplatePath << " contains no .stroke file." << endl;
+						}
+						else
+						{
 							// Process the drawn stroke.
 							vector<Vector2> drawingPointsCopy = drawingPoints;
 							drawingPointsCopy = Resample(drawingPointsCopy);
 							drawingPointsCopy = RotateBy(drawingPointsCopy, -IndicativeAngle(drawingPointsCopy));
 							drawingPointsCopy = ScaleTo(drawingPointsCopy);
 							drawingPointsCopy = TranslateTo(drawingPointsCopy);
-
-							// cout << "Drawing stroke size: " << drawingPointsCopy.size() << endl;
 
 							// Process the strokes from the template files.
 							map<string, vector<Vector2>>::iterator it = strokes.begin();
@@ -579,8 +497,6 @@ int main(int argc, char* argv[])
 								it->second = RotateBy(it->second, -IndicativeAngle(it->second));
 								it->second = ScaleTo(it->second);
 								it->second = TranslateTo(it->second);
-
-								// cout << it->first << " size: " << it->second.size() << endl;
 
 								++it;
 							}
