@@ -396,3 +396,21 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Don't ignore the SDL library
+!SDL2-2.0.7\lib
+
+# Don't ignore the DLL files in the Debug and Release folders
+![Dd]ebug/libfreetype-6.dll
+![Dd]ebug/NFont_gpu.dll
+![Dd]ebug/SDL2.dll
+![Dd]ebug/SDL2_gpu.dll
+![Dd]ebug/SDL2_ttf.dll
+![Dd]ebug/zlib1.dll
+
+![Rr]elease/libfreetype-6.dll
+![Rr]elease/NFont_gpu.dll
+![Rr]elease/SDL2.dll
+![Rr]elease/SDL2_gpu.dll
+![Rr]elease/SDL2_ttf.dll
+![Rr]elease/zlib1.dll
