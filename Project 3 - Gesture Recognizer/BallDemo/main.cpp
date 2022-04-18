@@ -215,6 +215,7 @@ vector<Vector2> RotateBy(const vector<Vector2>& points, const float& angle)
 // Step 3
 // -------------------------------------------
 
+// Scale a stroke to a (size x size) bounding box.
 vector<Vector2> ScaleTo(const vector<Vector2>& points, const int& size = 250)
 {
 	vector<Vector2> newPoints;
@@ -240,6 +241,7 @@ vector<Vector2> ScaleTo(const vector<Vector2>& points, const int& size = 250)
 	return newPoints;
 }
 
+// Translate a stroke to the origin.
 vector<Vector2> TranslateTo(const vector<Vector2>& points, const Vector2& origin = Vector2())
 {
 	vector<Vector2> newPoints;
@@ -263,7 +265,7 @@ vector<Vector2> TranslateTo(const vector<Vector2>& points, const Vector2& origin
 // Step 4
 // -------------------------------------------
 
-// Find the average distance between 2 repsective points of two strokes.
+// Find the average distance between repsective points of two strokes.
 float PathDistance(const vector<Vector2>& points1, const vector<Vector2>& points2)
 {
 	if (points1.size() != points2.size())
