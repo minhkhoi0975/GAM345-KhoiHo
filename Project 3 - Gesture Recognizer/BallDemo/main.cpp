@@ -14,24 +14,31 @@
 #include "NFont_gpu.h"
 #include "Random.h"
 #include "Vector2.h"
+#include "Stroke.h"
 #include "utils.h"
 using namespace std;
 
 const float PI = 2.0f * acosf(0.0f);
 
-// Open a stroke template.
-vector<Vector2> OpenTemplate(const string& fileName)
+// Open a stroke file.
+Stroke OpenStroke(const string& fileName)
 {
-	vector<Vector2> stroke;
+	Stroke stroke;
 
+	//cout << "Opening file: " << fileName << endl;
 	fstream inputFile(fileName);
 	if (inputFile)
 	{
-		Vector2 position;
+		// Read the name of the stroke.
+		getline(inputFile, stroke.name);
+		//cout << "Stroke name: " << stroke.name << endl;
 
+		// Read the points of the stroke.
+		Vector2 position;
 		while (inputFile >> position.x >> position.y)
 		{
-			stroke.push_back(position);
+			stroke.points.push_back(position);
+			//cout << "Stroke point: " << position.x << "\t" << position.y << endl;
 		}
 
 		inputFile.close();
@@ -44,16 +51,20 @@ vector<Vector2> OpenTemplate(const string& fileName)
 	return stroke;
 }
 
-// Save the stroke to a template file. Return true if the file is successfully saved.
-bool SaveTemplate(const string& fileName, const vector<Vector2>& stroke)
+// Save the stroke to a file. Return true if the file is successfully saved.
+bool SaveStroke(const string& fileName, const Stroke& stroke)
 {
 	fstream outputFile(fileName, ofstream::out | ofstream::trunc);
 
 	if (outputFile)
 	{
-		for (int i = 0; i < stroke.size(); i++)
+		// Save the name of the stroke.
+		outputFile << stroke.name << endl;
+
+		// Save the points of the stroke.
+		for (int i = 0; i < stroke.points.size(); i++)
 		{
-			outputFile << stroke[i].x << "\t" << stroke[i].y << endl;
+			outputFile << stroke.points[i].x << "\t" << stroke.points[i].y << endl;
 		}
 
 		outputFile.close();
@@ -325,21 +336,21 @@ float DistanceAtBestAngle(const vector<Vector2>& points1, const vector<Vector2>&
 	return f1 < f2 ? f1 : f2;
 }
 
-// Find the template that matches the drawn stroke.
-pair<string, float> Recognize(const vector<Vector2>& points, const map<string, vector<Vector2>>& strokeTemplates, const float& size = 250)
+// Find the template that matches the drawn stroke and the score.
+pair<Stroke, float> Recognize(const Stroke& strokeToRecognize, const vector<Stroke>& strokeTemplates, const float& size = 250)
 {
-	pair<string, float> matchingStroke;
+	pair<Stroke, float> matchingStroke;
 
 	float b = numeric_limits<float>::infinity();
 
-	for (const pair<string, vector<Vector2>>& strokeTemplate : strokeTemplates)
+	for (const Stroke& strokeTemplate : strokeTemplates)
 	{
-		float distance = DistanceAtBestAngle(points, strokeTemplate.second, -0.25f * PI, 0.25f * PI, PI / 90.0f);
+		float distance = DistanceAtBestAngle(strokeToRecognize.points, strokeTemplate.points, -0.25f * PI, 0.25f * PI, PI / 90.0f);
 		
 		if (distance < b)
 		{
 			b = distance;
-			matchingStroke.first = strokeTemplate.first;
+			matchingStroke.first = strokeTemplate;
 		}
 
 		float score = 1 - b / 0.5f * sqrt(size * size + size * size);
@@ -369,7 +380,8 @@ int main(int argc, char* argv[])
 	int mouseX = 0, mouseY = 0;
 
 	bool drawing = false;
-	vector<Vector2> drawingPoints;
+	// vector<Vector2> drawingPoints;
+	Stroke drawnStroke;
 
 	// The path of the folder that contains the stroke templates.
 	string strokeTemplatePath = argv[0];
@@ -378,9 +390,9 @@ int main(int argc, char* argv[])
 	cout << strokeTemplatePath << endl;
 
 	// The stroke that matches the drawn stroke.
-	// + The first value is the file name of the matching stroke.
+	// + The first value is the Stroke object.
 	// + The second value is the score.
-	pair<string, float> matchingStroke;
+	pair<Stroke, float> matchingStroke;
 
 	SDL_Event event;
 	bool done = false;
@@ -400,24 +412,35 @@ int main(int argc, char* argv[])
 				if (event.key.keysym.sym == SDLK_s)
 				{
 					// Cannot save the drawn stroke if it is too short.
-					if (drawingPoints.size() < 10)
+					if (drawnStroke.points.size() < 10)
 					{
 						cout << "Cannot save the stroke: The stroke is too short." << endl;
 					}
 					else
 					{
+						// Ask the user the enter the name of the stroke.
+						cout << "Enter the name of the stroke: ";
+						do
+						{
+							getline(cin, drawnStroke.name);
+						} while (drawnStroke.name.empty());
+
+						// Ask the user to save the stroke.
 						string fileName = SaveFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
 
-						// If the file name does not have the extension at the end, add the exetension.
-						const string fileExtension = ".stroke";
-						if (fileName.compare(fileName.length() - fileExtension.length(), fileExtension.length(), fileExtension) != 0)
+						if (!fileName.empty())
 						{
-							fileName.append(fileExtension);
+							// If the file name does not have the extension at the end, add the exetension.
+							const string fileExtension = ".stroke";
+							if (fileName.length() <= fileExtension.length() || fileName.compare(fileName.length() - fileExtension.length(), fileExtension.length(), fileExtension) != 0)
+							{
+								fileName.append(fileExtension);
+							}
+
+							cout << "Saving the template to file: " << fileName << endl;
+
+							SaveStroke(fileName, drawnStroke);
 						}
-
-						cout << "Saving the template to file: " << fileName << endl;
-
-						SaveTemplate(fileName, drawingPoints);
 					}
 				}
 
@@ -427,17 +450,16 @@ int main(int argc, char* argv[])
 					string fileName = OpenFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
 					cout << fileName << endl;
 
-					drawingPoints.clear();
-					drawingPoints = OpenTemplate(fileName);
+					drawnStroke = OpenStroke(fileName);
 				}
 
 				// Press T to resample the drawn stroke.
 				if (event.key.keysym.sym == SDLK_t)
 				{
-					drawingPoints = Resample(drawingPoints);
-					drawingPoints = RotateBy(drawingPoints, -IndicativeAngle(drawingPoints));
-					drawingPoints = ScaleTo(drawingPoints);
-					drawingPoints = TranslateTo(drawingPoints, Vector2(400, 300));
+					drawnStroke.points = Resample(drawnStroke.points);
+					drawnStroke.points = RotateBy(drawnStroke.points, -IndicativeAngle(drawnStroke.points));
+					drawnStroke.points = ScaleTo(drawnStroke.points);
+					drawnStroke.points = TranslateTo(drawnStroke.points, Vector2(400, 300));
 				}
 
 				// Press P to change where the stroke template folder is.
@@ -454,7 +476,7 @@ int main(int argc, char* argv[])
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
 					drawing = true;
-					drawingPoints.clear();
+					drawnStroke.points.clear();
 				}
 			}
 
@@ -466,33 +488,37 @@ int main(int argc, char* argv[])
 					drawing = false;
 
 					// Cannot recognize the drawn stroke if it is too short.
-					if (drawingPoints.size() < 10)
+					if (drawnStroke.points.size() < 10)
 					{
 						cout << "The stroke is too short." << endl;
 					}
 					else
 					{
 						// Read the stroke templates.
-						map<string, vector<Vector2>> strokes;
+						vector<Stroke> strokeTemplates;
 						for (const string& fileName : GetAllFileNames(strokeTemplatePath, "*.stroke"))
 						{
-							strokes[fileName] = OpenTemplate("Stroke Templates/" + fileName);
+							Stroke strokeTemplate = OpenStroke(strokeTemplatePath + "\\" + fileName);
+
+							if (!strokeTemplate.name.empty())
+								strokeTemplates.push_back(strokeTemplate);
 						}
 
-						if (strokes.size() == 0)
+						if (strokeTemplates.size() == 0)
 						{
 							cout << "The folder " << strokeTemplatePath << " contains no .stroke file." << endl;
 						}
 						else
 						{
 							// Process the drawn stroke.
-							vector<Vector2> drawingPointsCopy = drawingPoints;
-							drawingPointsCopy = Resample(drawingPointsCopy);
-							drawingPointsCopy = RotateBy(drawingPointsCopy, -IndicativeAngle(drawingPointsCopy));
-							drawingPointsCopy = ScaleTo(drawingPointsCopy);
-							drawingPointsCopy = TranslateTo(drawingPointsCopy);
+							Stroke drawnStrokeCopy = drawnStroke;
+							drawnStrokeCopy.points = Resample(drawnStrokeCopy.points);
+							drawnStrokeCopy.points = RotateBy(drawnStrokeCopy.points, -IndicativeAngle(drawnStrokeCopy.points));
+							drawnStrokeCopy.points = ScaleTo(drawnStrokeCopy.points);
+							drawnStrokeCopy.points = TranslateTo(drawnStrokeCopy.points);
 
 							// Process the strokes from the template files.
+							/*
 							map<string, vector<Vector2>>::iterator it = strokes.begin();
 							while (it != strokes.end())
 							{
@@ -503,10 +529,19 @@ int main(int argc, char* argv[])
 
 								++it;
 							}
+							*/
+
+							for (Stroke& stroke : strokeTemplates)
+							{
+								stroke.points = Resample(stroke.points);
+								stroke.points = RotateBy(stroke.points, -IndicativeAngle(stroke.points));
+								stroke.points = ScaleTo(stroke.points);
+								stroke.points = TranslateTo(stroke.points);
+							}
 
 							// Recognize the pattern.
-							matchingStroke = Recognize(drawingPointsCopy, strokes);
-							cout << "Matching stroke: " << matchingStroke.first << "\t" << "Score: " << matchingStroke.second << endl;
+							matchingStroke = Recognize(drawnStrokeCopy, strokeTemplates);
+							cout << "Matching stroke: " << matchingStroke.first.name << "\t" << "Score: " << matchingStroke.second << endl;
 						}
 					}
 				}
@@ -521,36 +556,35 @@ int main(int argc, char* argv[])
 			Vector2 mousePosition(mouseX, mouseY);
 
 			// Don't at the latest cursor position to the array if it is not moving.
-			if (drawingPoints.size() == 0 || mousePosition != drawingPoints[drawingPoints.size() - 1])
+			if (drawnStroke.points.size() == 0 || mousePosition != drawnStroke.points[drawnStroke.points.size() - 1])
 			{
-				drawingPoints.push_back(mousePosition);
-				//cout << mousePosition.x << " " << mousePosition.y << endl;
+				drawnStroke.points.push_back(mousePosition);
 			}
 		}
 
 		GPU_ClearRGB(screen, 255, 255, 255);
 
 		// Draw the starting point.
-		if (drawingPoints.size() > 0)
+		if (drawnStroke.points.size() > 0)
 		{
-			GPU_Circle(screen, drawingPoints[0].x, drawingPoints[0].y, 5.0f, GPU_MakeColor(0, 0, 255, 255));
+			GPU_Circle(screen, drawnStroke.points[0].x, drawnStroke.points[0].y, 5.0f, GPU_MakeColor(0, 0, 255, 255));
 		}
 
 		// Draw lines
 		GPU_SetLineThickness(5.0f);
-		for (int i = 1; i < drawingPoints.size(); ++i)
+		for (int i = 1; i < drawnStroke.points.size(); ++i)
 		{
-			Vector2 p1 = drawingPoints[i-1];
-			Vector2 p2 = drawingPoints[i];
+			Vector2 p1 = drawnStroke.points[i-1];
+			Vector2 p2 = drawnStroke.points[i];
 			GPU_Line(screen, p1.x, p1.y, p2.x, p2.y, GPU_MakeColor(255, 0, 0, 255));
 		}
 		GPU_SetLineThickness(1.0f);
 
 		// Draw the ending point.
-		if (drawingPoints.size() > 0)
+		if (drawnStroke.points.size() > 0)
 		{
-			const int lastPoint = drawingPoints.size() - 1;
-			GPU_Circle(screen, drawingPoints[lastPoint].x, drawingPoints[lastPoint].y, 5.0f, GPU_MakeColor(0, 122, 0, 255));
+			const int lastPoint = drawnStroke.points.size() - 1;
+			GPU_Circle(screen, drawnStroke.points[lastPoint].x, drawnStroke.points[lastPoint].y, 5.0f, GPU_MakeColor(0, 122, 0, 255));
 		}
 
 		font.draw(screen, screen->w - 50.0f, 10.0f, NFont::AlignEnum::RIGHT, 
@@ -562,10 +596,10 @@ int main(int argc, char* argv[])
 		);
 
 		
-		if (!matchingStroke.first.empty())
+		if (!matchingStroke.first.points.empty())
 		{
 			stringstream matchingStrokeSS;
-			matchingStrokeSS << "Matching stroke: " << matchingStroke.first;
+			matchingStrokeSS << "Matching stroke: " << matchingStroke.first.name;
 			font.draw(screen, 10.0f, screen->h - 20, NFont::AlignEnum::LEFT, matchingStrokeSS.str().c_str());
 		}
 
