@@ -96,8 +96,6 @@ bool SaveStrokes(const string& fileName, const vector<Stroke>& strokes)
 			{
 				outputFile << stroke.points[i].x << "\t" << stroke.points[i].y << endl;
 			}
-
-			// cout << "Stroke " << stroke.name << " has been saved to " << fileName << "." << endl;
 		}
 
 		outputFile.close();
@@ -113,6 +111,7 @@ int main(int argc, char* argv[])
 {
 	const int SCREEN_WIDTH = 800;
 	const int SCREEN_HEIGHT = 600;
+	const string STROKE_FILENAME = "mystrokes.txt";
 
 	// Initialize SDL_GPU.
 	GPU_Target* screen = GPU_Init(SCREEN_WIDTH, SCREEN_HEIGHT, GPU_DEFAULT_INIT_FLAGS);
@@ -135,12 +134,7 @@ int main(int argc, char* argv[])
 
 	Stroke drawnStroke;
 
-	vector<Stroke> strokes = OpenStrokes("mystrokes.txt");
-
-	// The stroke that matches the drawn stroke.
-	// + The first value is the Stroke object.
-	// + The second value is the score.
-	pair<Stroke, float> matchingStroke;
+	vector<Stroke> strokes = OpenStrokes(STROKE_FILENAME);
 
 	SDL_Event event;
 	bool done = false;
@@ -188,12 +182,15 @@ int main(int argc, char* argv[])
 						// Add the stroke to the stroke vector.
 						strokes.push_back(drawnStroke);
 
+						// Sort the strokes.
+						sort(strokes.begin(), strokes.end());
+
 						// Save the strokes.
 						bool canSave = SaveStrokes("mystrokes.txt", strokes);
 
 						if (canSave)
 						{
-							cout << "The stroke \"" << drawnStroke.name << "\" has been successfully saved to mystrokes.txt" << endl;
+							cout << "The stroke \"" << drawnStroke.name << "\" has been successfully saved to " << STROKE_FILENAME << endl;
 						}
 					}
 				}
@@ -202,7 +199,6 @@ int main(int argc, char* argv[])
 				if (event.key.keysym.sym == SDLK_c)
 				{
 					drawnStroke.points.clear();
-					// canDraw = true;
 				}
 
 				// Press R to recognize the drawn stroke.
@@ -252,8 +248,7 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
-
-				
+	
 				// Press V to view an existing stroke.
 				if (event.key.keysym.sym == SDLK_v)
 				{
@@ -352,7 +347,7 @@ int main(int argc, char* argv[])
 						}
 					}
 
-					cout << "\"" << strokeToDelete << "\" has been removed from mystrokes.txt" << endl;
+					cout << "\"" << strokeToDelete << "\" has been removed from " << STROKE_FILENAME << endl;
 				}
 
 				// Press T to resample the drawn stroke.

@@ -1,3 +1,6 @@
+// Stroke.h
+// Programmer: Khoi Ho
+
 #pragma once
 
 #include <string>
@@ -23,6 +26,9 @@ public:
 
 	// Equal operator overloading.
 	bool operator== (const Stroke& other);
+
+	// Less than operator overloading.
+	bool operator< (const Stroke& other);
 
 	// Get the centroid of the stroke.
 	Vector2 GetCentroid() const;

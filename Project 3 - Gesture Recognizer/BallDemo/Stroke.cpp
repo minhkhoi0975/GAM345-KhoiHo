@@ -1,18 +1,11 @@
 #include "Stroke.h"
-
 #include <limits>
 
-Stroke::Stroke():name(std::string())
-{
-}
+Stroke::Stroke():name(std::string()) {}
 
-Stroke::Stroke(const std::string& name):name(name)
-{
-}
+Stroke::Stroke(const std::string& name):name(name) {}
 
-Stroke::Stroke(const Stroke& other):name(other.name), points(other.points)
-{
-}
+Stroke::Stroke(const Stroke& other):name(other.name), points(other.points) {}
 
 Stroke& Stroke::operator=(const Stroke& other)
 {
@@ -25,6 +18,11 @@ Stroke& Stroke::operator=(const Stroke& other)
 bool Stroke::operator==(const Stroke& other)
 {
 	return this->name == other.name && this->points == other.points;
+}
+
+bool Stroke::operator<(const Stroke& other)
+{
+	return this->name < other.name;
 }
 
 Vector2 Stroke::GetCentroid() const
