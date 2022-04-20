@@ -4,6 +4,8 @@
 #include <shlobj.h>
 #include "SDL_syswm.h"
 
+#define IDD_PASSWORD 1300
+
 // Open the "Save File" dialog. Return the file path.
 std::string SaveFileDialog(SDL_Window* window, const char* filter)
 {
@@ -113,4 +115,27 @@ std::vector<std::string> GetAllFileNames(const std::string& templateFolderPath, 
 		::FindClose(hFind);
 	}
 	return names;
+}
+
+std::string InputDialog(SDL_Window* window)
+{
+	// Get the info of the native window.
+	static SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(window, &wmInfo);
+
+	HWND hwnd = wmInfo.info.win.window;
+
+	HWND inputDialogBox = CreateWindowEx(WS_EX_CLIENTEDGE, "edit", "Line one",
+		WS_CHILD | WS_VISIBLE | WS_TABSTOP | WS_BORDER | ES_LEFT,
+		CW_USEDEFAULT, CW_USEDEFAULT, 200, 24,	// x, y, w, h
+		hwnd, (HMENU)(101), (HINSTANCE)GetWindowLong(hwnd, GWL_HINSTANCE), NULL);
+
+	// char array to hold the text from the textbox
+	char szInput[MAX_PATH];
+
+	// Obtains input from the textbox and puts it into the char array
+	GetWindowText(GetDlgItem(hwnd, 101), szInput, MAX_PATH);
+
+	return std::string();
 }

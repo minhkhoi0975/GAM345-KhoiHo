@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <SDL.h>
+#include <Windows.h>
 
 // Open the "Save File" dialog. Return the file path.
 std::string SaveFileDialog(SDL_Window* window, const char* filter);
@@ -23,3 +24,6 @@ std::string BrowseFolder(const std::string& saved_path);
 
 // Get all files in a folder.
 std::vector<std::string> GetAllFileNames(const std::string& templateFolderPath, const std::string& filter = "*.*");
+
+// Input dialog.
+std::string InputDialog(SDL_Window* window);

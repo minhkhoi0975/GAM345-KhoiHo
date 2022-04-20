@@ -18,8 +18,6 @@
 #include "utils.h"
 using namespace std;
 
-const float PI = 2.0f * acosf(0.0f);
-
 // Open a stroke file.
 Stroke OpenStroke(const string& fileName)
 {
@@ -72,6 +70,91 @@ bool SaveStroke(const string& fileName, const Stroke& stroke)
 		return true;
 	}
 
+	return false;
+}
+
+// Open the stroke file and read the strokes.
+vector<Stroke> OpenStrokes(const string& fileName)
+{
+	vector<Stroke> strokes;
+
+	fstream inputFile(fileName, ifstream::in);
+	
+	if (inputFile)
+	{
+		// Read the number of strokes.
+		int numStrokes;
+		inputFile >> numStrokes;
+		cout << "Number of strokes: " << numStrokes << endl;
+
+		strokes.resize(numStrokes);
+
+		for (int i = 0; i < numStrokes; ++i)
+		{
+			// Read the name of the stroke.
+			inputFile.ignore(100, '\n');
+			getline(inputFile, strokes[i].name);
+
+			// Read the number of points.
+			int numPoints;
+			inputFile >> numPoints;
+
+			strokes[i].points.resize(numPoints);
+
+			// Read the points.
+			for (int j = 0; j < numPoints; ++j)
+			{
+				inputFile >> strokes[i].points[j].x >> strokes[i].points[j].y;
+			}
+
+			cout << "Read the stroke: " << strokes[i].name << " (Size=" << strokes[i].points.size() << ")" << endl;
+		}
+
+		inputFile.close();
+	}
+	else
+	{
+		cerr << "Error: Cannot open the stroke file." << endl;
+	}
+
+	return strokes;
+}
+
+// Save the strokes to a file. Return true is the file is successfully saved.
+bool SaveStrokes(const string& fileName, const vector<Stroke>& strokes)
+{
+	fstream outputFile(fileName, ofstream::out | ofstream::trunc);
+
+	if (outputFile)
+	{
+		// Write the number of strokes.
+		outputFile << strokes.size() << endl;
+
+		for (const Stroke& stroke : strokes)
+		{
+			// Write the name.
+			outputFile << stroke.name << endl;
+
+			// Write the number of points.
+			outputFile << stroke.points.size() << endl;
+
+			// Write the points.
+			for (int i = 0; i < stroke.points.size(); ++i)
+			{
+				outputFile << stroke.points[i].x << "\t" << stroke.points[i].y << endl;
+			}
+
+			// cout << "Stroke " << stroke.name << " has been saved to " << fileName << "." << endl;
+		}
+
+		outputFile.close();
+
+		cout << fileName << " has been successfully saved." << endl;
+
+		return true;
+	}
+
+	cerr << "Error: Cannot open the stroke file." << endl;
 	return false;
 }
 
@@ -133,7 +216,7 @@ void BoundingBox(const vector<Vector2>& points, Vector2& topLeftCorner, Vector2&
 }
 
 // -------------------------------------------
-// Step 1
+// Step 1: Resample the stroke.
 // -------------------------------------------
 
 // Find the total length of the lines between the points.
@@ -192,9 +275,9 @@ vector<Vector2> Resample(vector<Vector2> points, int numPoints = 64)
 	return newPoints;
 }
 
-// -------------------------------------------
-// Step 2
-// -------------------------------------------
+// -----------------------------------------------------------------------
+// Step 2: Get the indicative angle of the stroke and rotate the stroke.
+// -----------------------------------------------------------------------
 
 // Find the indicative angle from the centroid to the first point.
 float IndicativeAngle(const vector<Vector2>& points)
@@ -222,9 +305,9 @@ vector<Vector2> RotateBy(const vector<Vector2>& points, const float& angle)
 	return newPoints;
 }
 
-// -------------------------------------------
-// Step 3
-// -------------------------------------------
+// -------------------------------------------------------------------------
+// Step 3: Scale the stroke so that it is in the (size x size) bounding box.
+// -------------------------------------------------------------------------
 
 // Scale a stroke to a (size x size) bounding box.
 vector<Vector2> ScaleTo(const vector<Vector2>& points, const int& size = 250)
@@ -272,9 +355,9 @@ vector<Vector2> TranslateTo(const vector<Vector2>& points, const Vector2& origin
 	return newPoints;
 }
 
-// -------------------------------------------
-// Step 4
-// -------------------------------------------
+// ---------------------------------------------------------
+// Step 4: Compare the drawn stroke with the saved strokes.
+// ---------------------------------------------------------
 
 // Find the average distance between repsective points of two strokes.
 float PathDistance(const vector<Vector2>& points1, const vector<Vector2>& points2)
@@ -339,6 +422,7 @@ float DistanceAtBestAngle(const vector<Vector2>& points1, const vector<Vector2>&
 // Find the template that matches the drawn stroke and the score.
 pair<Stroke, float> Recognize(const Stroke& strokeToRecognize, const vector<Stroke>& strokeTemplates, const float& size = 250)
 {
+	static const float PI = 2.0f * acosf(0.0f);
 	static const float ANGLE_ALPHA = -0.25f * PI; //  45 degrees.
 	static const float ANGLE_BETA = 0.25f * PI;   // -45 degrees.
 	static const float ANGLE_DELTA = PI / 90.0f;  //   2 degrees.
@@ -385,7 +469,10 @@ int main(int argc, char* argv[])
 
 	bool canDraw = true;
 	bool isDrawing = false;
+
 	Stroke drawnStroke;
+
+	vector<Stroke> strokes = OpenStrokes("mystrokes.txt");
 
 	// The path of the folder that contains the stroke templates.
 	string strokeTemplatePath = argv[0];
@@ -412,7 +499,7 @@ int main(int argc, char* argv[])
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 					done = true;
 
-				// Press S to save the stroke to a file.
+				// Press S to save the stroke.
 				if (event.key.keysym.sym == SDLK_s)
 				{
 					// Cannot save the drawn stroke if it is too short.
@@ -426,9 +513,17 @@ int main(int argc, char* argv[])
 						cout << "Enter the name of the stroke: ";
 						do
 						{
+							//cin.ignore(100, '\n');
 							getline(cin, drawnStroke.name);
 						} while (drawnStroke.name.empty());
 
+						// Add the stroke to the stroke vector.
+						strokes.push_back(drawnStroke);
+
+						// Save the strokes.
+						SaveStrokes("mystrokes.txt", strokes);
+
+						/*
 						// Ask the user to save the stroke.
 						string fileName = SaveFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
 
@@ -445,6 +540,7 @@ int main(int argc, char* argv[])
 
 							SaveStroke(fileName, drawnStroke);
 						}
+						*/
 					}
 				}
 
@@ -465,6 +561,7 @@ int main(int argc, char* argv[])
 					}
 					else
 					{
+						/*
 						// Read the stroke templates.
 						vector<Stroke> strokeTemplates;
 						for (const string& fileName : GetAllFileNames(strokeTemplatePath, "*.stroke"))
@@ -474,11 +571,19 @@ int main(int argc, char* argv[])
 							if (!strokeTemplate.name.empty())
 								strokeTemplates.push_back(strokeTemplate);
 						}
+						*/
 
+						/*
 						if (strokeTemplates.size() == 0)
 						{
 							cout << "The folder " << strokeTemplatePath << " contains no .stroke file." << endl;
 						}
+						*/
+						if (strokes.size() == 0)
+						{
+							cout << "There is no saved stroke." << endl;
+						}
+
 						else
 						{
 							// Process the drawn stroke.
@@ -488,6 +593,7 @@ int main(int argc, char* argv[])
 							drawnStrokeCopy.points = ScaleTo(drawnStrokeCopy.points);
 							drawnStrokeCopy.points = TranslateTo(drawnStrokeCopy.points);
 
+							/*
 							for (Stroke& stroke : strokeTemplates)
 							{
 								stroke.points = Resample(stroke.points);
@@ -499,19 +605,74 @@ int main(int argc, char* argv[])
 							// Recognize the pattern.
 							matchingStroke = Recognize(drawnStrokeCopy, strokeTemplates);
 							cout << "Matching stroke: " << matchingStroke.first.name << "\t" << "Score: " << matchingStroke.second << endl;
+							*/
+
+							vector<Stroke> strokesCopy(strokes);
+							for (Stroke& stroke : strokesCopy)
+							{
+								stroke.points = Resample(stroke.points);
+								stroke.points = RotateBy(stroke.points, -IndicativeAngle(stroke.points));
+								stroke.points = ScaleTo(stroke.points);
+								stroke.points = TranslateTo(stroke.points);
+							}
+
+							// Recognize the pattern.
+							matchingStroke = Recognize(drawnStrokeCopy, strokesCopy);
+
+							stringstream matchingStrokeSS;
+							matchingStrokeSS << matchingStroke.first.name << " (Score=" << matchingStroke.second << ")" << endl;
+
+							SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Matching Stroke", matchingStrokeSS.str().c_str(), SDL_GetWindowFromID(screen->context->windowID));
 						}
 					}
 				}
 
+				
 				// Press O to view an existing stroke.
 				if (event.key.keysym.sym == SDLK_o)
 				{
+					/*
 					string fileName = OpenFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
 					cout << fileName << endl;
 
 					drawnStroke = OpenStroke(fileName);
 
 					canDraw = false;
+					*/
+
+					InputDialog(SDL_GetWindowFromID(screen->context->windowID));
+				}
+				
+
+				// Press D to delete a save stroke.
+				if (event.key.keysym.sym == SDLK_d)
+				{
+					cout << "List of saved strokes: " << endl;
+					for (const Stroke& stroke : strokes)
+					{
+						cout << stroke.name << endl;
+					}
+
+					cout << "Enter the stroke to delete: " << endl;
+
+					string strokeToDelete;
+					cin.ignore(100, '\n');
+					getline(cin, strokeToDelete);
+
+					cout << "Stroke to delete: " << strokeToDelete << endl;
+
+					int i = 0;
+					while (i < strokes.size())
+					{
+						if (strokes[i].name == strokeToDelete)
+						{
+							strokes.erase(strokes.begin() + i);
+						}
+						else
+						{
+							++i;
+						}
+					}
 				}
 
 				// Press T to resample the drawn stroke.
@@ -600,22 +761,17 @@ int main(int argc, char* argv[])
 			"R: Recognize the stroke\n"
 			"S: Save the stroke to a file\n"
 			"O: View an existing stroke\n"
+			"D: Delete a saved stroke\n"
 		    "T: Resample the stroke\n"
 			"P: Change the stroke template folder"
 		);
-
-		
-		if (!matchingStroke.first.points.empty())
-		{
-			stringstream matchingStrokeSS;
-			matchingStrokeSS << "Matching stroke: " << matchingStroke.first.name << " (Score=" << matchingStroke.second << ")";
-			font.draw(screen, 10.0f, screen->h - 20, NFont::AlignEnum::LEFT, matchingStrokeSS.str().c_str());
-		}
 
 		GPU_Flip(screen);
 
 		SDL_Delay(1);
 	}
+
+	// SaveStrokes("mystrokes.txt", strokes);
 
 	font.free();
 
