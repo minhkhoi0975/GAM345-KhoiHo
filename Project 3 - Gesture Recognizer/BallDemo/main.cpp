@@ -379,8 +379,8 @@ int main(int argc, char* argv[])
 	// Coordinates of the mouse.
 	int mouseX = 0, mouseY = 0;
 
-	bool drawing = false;
-	// vector<Vector2> drawingPoints;
+	bool canDraw = true;
+	bool isDrawing = false;
 	Stroke drawnStroke;
 
 	// The path of the folder that contains the stroke templates.
@@ -408,7 +408,7 @@ int main(int argc, char* argv[])
 				if (event.key.keysym.sym == SDLK_ESCAPE)
 					done = true;
 
-				// Press S to save the template to a file.
+				// Press S to save the stroke to a file.
 				if (event.key.keysym.sym == SDLK_s)
 				{
 					// Cannot save the drawn stroke if it is too short.
@@ -444,49 +444,16 @@ int main(int argc, char* argv[])
 					}
 				}
 
-				// Press O to open an existing template.
-				if (event.key.keysym.sym == SDLK_o)
+				// Press C to clear the drawn stroke.
+				if (event.key.keysym.sym == SDLK_c)
 				{
-					string fileName = OpenFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
-					cout << fileName << endl;
-
-					drawnStroke = OpenStroke(fileName);
-				}
-
-				// Press T to resample the drawn stroke.
-				if (event.key.keysym.sym == SDLK_t)
-				{
-					drawnStroke.points = Resample(drawnStroke.points);
-					drawnStroke.points = RotateBy(drawnStroke.points, -IndicativeAngle(drawnStroke.points));
-					drawnStroke.points = ScaleTo(drawnStroke.points);
-					drawnStroke.points = TranslateTo(drawnStroke.points, Vector2(400, 300));
-				}
-
-				// Press P to change where the stroke template folder is.
-				if (event.key.keysym.sym == SDLK_p)
-				{
-					strokeTemplatePath = BrowseFolder(argv[0]);
-					cout << "Stroke template folder has been changed to: " << strokeTemplatePath << endl;
-				}
-			}
-
-			// Hold left mouse to draw.
-			if (event.type == SDL_MOUSEBUTTONDOWN)
-			{
-				if (event.button.button == SDL_BUTTON_LEFT)
-				{
-					drawing = true;
 					drawnStroke.points.clear();
+					canDraw = true;
 				}
-			}
 
-			// Release left mouse to stop drawing.
-			if (event.type == SDL_MOUSEBUTTONUP)
-			{
-				if (event.button.button == SDL_BUTTON_LEFT)
+				// Press R to recognize the drawn stroke.
+				if (event.key.keysym.sym == SDLK_r)
 				{
-					drawing = false;
-
 					// Cannot recognize the drawn stroke if it is too short.
 					if (drawnStroke.points.size() < 10)
 					{
@@ -517,20 +484,6 @@ int main(int argc, char* argv[])
 							drawnStrokeCopy.points = ScaleTo(drawnStrokeCopy.points);
 							drawnStrokeCopy.points = TranslateTo(drawnStrokeCopy.points);
 
-							// Process the strokes from the template files.
-							/*
-							map<string, vector<Vector2>>::iterator it = strokes.begin();
-							while (it != strokes.end())
-							{
-								it->second = Resample(it->second);
-								it->second = RotateBy(it->second, -IndicativeAngle(it->second));
-								it->second = ScaleTo(it->second);
-								it->second = TranslateTo(it->second);
-
-								++it;
-							}
-							*/
-
 							for (Stroke& stroke : strokeTemplates)
 							{
 								stroke.points = Resample(stroke.points);
@@ -545,13 +498,109 @@ int main(int argc, char* argv[])
 						}
 					}
 				}
+
+				// Press O to view an existing stroke.
+				if (event.key.keysym.sym == SDLK_o)
+				{
+					string fileName = OpenFileDialog(SDL_GetWindowFromID(screen->context->windowID), "Stroke Template (*.stroke)\0*.stroke\0");
+					cout << fileName << endl;
+
+					drawnStroke = OpenStroke(fileName);
+
+					canDraw = false;
+				}
+
+				// Press T to resample the drawn stroke.
+				if (event.key.keysym.sym == SDLK_t)
+				{
+					drawnStroke.points = Resample(drawnStroke.points);
+					drawnStroke.points = RotateBy(drawnStroke.points, -IndicativeAngle(drawnStroke.points));
+					drawnStroke.points = ScaleTo(drawnStroke.points);
+					drawnStroke.points = TranslateTo(drawnStroke.points, Vector2(400, 300));
+				}
+
+				// Press P to change where the stroke template folder is.
+				if (event.key.keysym.sym == SDLK_p)
+				{
+					strokeTemplatePath = BrowseFolder(argv[0]);
+					cout << "Stroke template folder has been changed to: " << strokeTemplatePath << endl;
+				}
+			}
+
+			// Hold left mouse to draw.
+			if (event.type == SDL_MOUSEBUTTONDOWN)
+			{
+				if (event.button.button == SDL_BUTTON_LEFT)
+				{
+					if (canDraw)
+					{
+						isDrawing = true;
+					}
+					//drawnStroke.points.clear();
+				}
+			}
+
+			// Release left mouse to stop drawing.
+			if (event.type == SDL_MOUSEBUTTONUP)
+			{
+				if (event.button.button == SDL_BUTTON_LEFT)
+				{
+					isDrawing = false;
+					canDraw = false;
+
+					/*
+					// Cannot recognize the drawn stroke if it is too short.
+					if (drawnStroke.points.size() < 10)
+					{
+						cout << "The stroke is too short." << endl;
+					}
+					else
+					{
+						// Read the stroke templates.
+						vector<Stroke> strokeTemplates;
+						for (const string& fileName : GetAllFileNames(strokeTemplatePath, "*.stroke"))
+						{
+							Stroke strokeTemplate = OpenStroke(strokeTemplatePath + "\\" + fileName);
+
+							if (!strokeTemplate.name.empty())
+								strokeTemplates.push_back(strokeTemplate);
+						}
+
+						if (strokeTemplates.size() == 0)
+						{
+							cout << "The folder " << strokeTemplatePath << " contains no .stroke file." << endl;
+						}
+						else
+						{
+							// Process the drawn stroke.
+							Stroke drawnStrokeCopy = drawnStroke;
+							drawnStrokeCopy.points = Resample(drawnStrokeCopy.points);
+							drawnStrokeCopy.points = RotateBy(drawnStrokeCopy.points, -IndicativeAngle(drawnStrokeCopy.points));
+							drawnStrokeCopy.points = ScaleTo(drawnStrokeCopy.points);
+							drawnStrokeCopy.points = TranslateTo(drawnStrokeCopy.points);
+
+							for (Stroke& stroke : strokeTemplates)
+							{
+								stroke.points = Resample(stroke.points);
+								stroke.points = RotateBy(stroke.points, -IndicativeAngle(stroke.points));
+								stroke.points = ScaleTo(stroke.points);
+								stroke.points = TranslateTo(stroke.points);
+							}
+
+							// Recognize the pattern.
+							matchingStroke = Recognize(drawnStrokeCopy, strokeTemplates);
+							cout << "Matching stroke: " << matchingStroke.first.name << "\t" << "Score: " << matchingStroke.second << endl;
+						}
+					}
+					*/
+				}
 			}
 		}
 
 		SDL_GetMouseState(&mouseX, &mouseY);
 
 		// Holding mouse button
-		if(drawing)
+		if(isDrawing)
 		{
 			Vector2 mousePosition(mouseX, mouseY);
 
@@ -588,9 +637,11 @@ int main(int argc, char* argv[])
 		}
 
 		font.draw(screen, screen->w - 50.0f, 10.0f, NFont::AlignEnum::RIGHT, 
-			"Left click: Draw gesture\n"
-			"S: Save template\n"
-			"O: View an existing template\n"
+			"Left click: Draw a stroke\n"
+			"C: Clear the stroke\n"
+			"R: Recognize the stroke\n"
+			"S: Save the stroke to a file\n"
+			"O: View an existing stroke\n"
 		    "T: Resample the stroke\n"
 			"P: Change the stroke template folder"
 		);
