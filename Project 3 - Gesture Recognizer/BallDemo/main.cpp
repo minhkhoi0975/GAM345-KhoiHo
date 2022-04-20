@@ -305,22 +305,22 @@ float DistanceAtAngle(const vector<Vector2>& points1, const vector<Vector2>& poi
 
 float DistanceAtBestAngle(const vector<Vector2>& points1, const vector<Vector2>& points2, float angleAlpha, float angleBeta, const float& angleDelta)
 {
-	static const float phi = 0.5 * (-1 + sqrt(5));
+	static const float phi = 0.5f * (-1.0f + sqrt(5.0f));
 
-	float x1 = phi * angleAlpha + (1 - phi) * angleBeta;
+	float x1 = phi * angleAlpha + (1.0f - phi) * angleBeta;
 	float f1 = DistanceAtAngle(points1, points2, x1);
 
-	float x2 = (1 - phi) * angleAlpha + phi * angleBeta;
+	float x2 = (1.0f - phi) * angleAlpha + phi * angleBeta;
 	float f2 = DistanceAtAngle(points1, points2, x2);
 
-	while (abs(angleAlpha - angleBeta) > angleDelta)
+	while (abs(angleBeta - angleAlpha) > angleDelta)
 	{
 		if (f1 < f2)
 		{
 			angleBeta = x2;
 			x2 = x1;
 			f2 = f1;
-			x1 = phi * angleAlpha + (1 - phi) * angleBeta;
+			x1 = phi * angleAlpha + (1.0f - phi) * angleBeta;
 			f1 = DistanceAtAngle(points1, points2, x1);
 		}
 		else
@@ -328,7 +328,7 @@ float DistanceAtBestAngle(const vector<Vector2>& points1, const vector<Vector2>&
 			angleAlpha = x1;
 			x1 = x2;
 			f1 = f2;
-			x2 = (1 - phi) * angleAlpha + phi * angleBeta;
+			x2 = (1.0f - phi) * angleAlpha + phi * angleBeta;
 			f2 = DistanceAtAngle(points1, points2, x2);
 		}
 	}
@@ -339,21 +339,25 @@ float DistanceAtBestAngle(const vector<Vector2>& points1, const vector<Vector2>&
 // Find the template that matches the drawn stroke and the score.
 pair<Stroke, float> Recognize(const Stroke& strokeToRecognize, const vector<Stroke>& strokeTemplates, const float& size = 250)
 {
+	static const float ANGLE_ALPHA = -0.25f * PI; //  45 degrees.
+	static const float ANGLE_BETA = 0.25f * PI;   // -45 degrees.
+	static const float ANGLE_DELTA = PI / 90.0f;  //   2 degrees.
+
 	pair<Stroke, float> matchingStroke;
 
-	float b = numeric_limits<float>::infinity();
+	float bestDistance = numeric_limits<float>::infinity();
 
 	for (const Stroke& strokeTemplate : strokeTemplates)
 	{
-		float distance = DistanceAtBestAngle(strokeToRecognize.points, strokeTemplate.points, -0.25f * PI, 0.25f * PI, PI / 90.0f);
+		float distance = DistanceAtBestAngle(strokeToRecognize.points, strokeTemplate.points, ANGLE_ALPHA, ANGLE_BETA, ANGLE_DELTA);
 		
-		if (distance < b)
+		if (distance < bestDistance)
 		{
-			b = distance;
+			bestDistance = distance;
 			matchingStroke.first = strokeTemplate;
 		}
 
-		float score = 1 - b / 0.5f * sqrt(size * size + size * size);
+		float score = 1.0f - bestDistance / (0.5f * sqrt(size * size + size * size));
 		matchingStroke.second = score;
 	}
 
@@ -547,52 +551,6 @@ int main(int argc, char* argv[])
 				{
 					isDrawing = false;
 					canDraw = false;
-
-					/*
-					// Cannot recognize the drawn stroke if it is too short.
-					if (drawnStroke.points.size() < 10)
-					{
-						cout << "The stroke is too short." << endl;
-					}
-					else
-					{
-						// Read the stroke templates.
-						vector<Stroke> strokeTemplates;
-						for (const string& fileName : GetAllFileNames(strokeTemplatePath, "*.stroke"))
-						{
-							Stroke strokeTemplate = OpenStroke(strokeTemplatePath + "\\" + fileName);
-
-							if (!strokeTemplate.name.empty())
-								strokeTemplates.push_back(strokeTemplate);
-						}
-
-						if (strokeTemplates.size() == 0)
-						{
-							cout << "The folder " << strokeTemplatePath << " contains no .stroke file." << endl;
-						}
-						else
-						{
-							// Process the drawn stroke.
-							Stroke drawnStrokeCopy = drawnStroke;
-							drawnStrokeCopy.points = Resample(drawnStrokeCopy.points);
-							drawnStrokeCopy.points = RotateBy(drawnStrokeCopy.points, -IndicativeAngle(drawnStrokeCopy.points));
-							drawnStrokeCopy.points = ScaleTo(drawnStrokeCopy.points);
-							drawnStrokeCopy.points = TranslateTo(drawnStrokeCopy.points);
-
-							for (Stroke& stroke : strokeTemplates)
-							{
-								stroke.points = Resample(stroke.points);
-								stroke.points = RotateBy(stroke.points, -IndicativeAngle(stroke.points));
-								stroke.points = ScaleTo(stroke.points);
-								stroke.points = TranslateTo(stroke.points);
-							}
-
-							// Recognize the pattern.
-							matchingStroke = Recognize(drawnStrokeCopy, strokeTemplates);
-							cout << "Matching stroke: " << matchingStroke.first.name << "\t" << "Score: " << matchingStroke.second << endl;
-						}
-					}
-					*/
 				}
 			}
 		}
@@ -650,7 +608,7 @@ int main(int argc, char* argv[])
 		if (!matchingStroke.first.points.empty())
 		{
 			stringstream matchingStrokeSS;
-			matchingStrokeSS << "Matching stroke: " << matchingStroke.first.name;
+			matchingStrokeSS << "Matching stroke: " << matchingStroke.first.name << " (Score=" << matchingStroke.second << ")";
 			font.draw(screen, 10.0f, screen->h - 20, NFont::AlignEnum::LEFT, matchingStrokeSS.str().c_str());
 		}
 
