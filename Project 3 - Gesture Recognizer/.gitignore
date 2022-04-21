@@ -17,12 +17,14 @@
 mono_crash.*
 
 # Build results
-[Dd]ebug/
-![Dd]ebug/*.dll
-[Dd]ebugPublic/
-[Rr]elease/
-![Rr]elease/*.dll
-[Rr]eleases/
+[Dd]ebug/*.exp
+[Dd]ebug/*.ilk
+[Dd]ebug/*.lib
+[Dd]ebug/*.pdb
+[Rr]elease/*.exp
+[Rr]elease/*.ilk
+[Rr]elease/*.lib
+[Rr]elease/*.pdb
 x64/
 x86/
 [Ww][Ii][Nn]32/
@@ -33,6 +35,9 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+
+BallDemo/[Dd]ebug/
+BallDemo/[Rr]elease/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
