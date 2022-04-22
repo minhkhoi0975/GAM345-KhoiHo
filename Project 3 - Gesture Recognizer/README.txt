@@ -19,3 +19,8 @@ How to control:
 + V: View an existing template.
 + D: Delete a saved template.
 + T: Resample the drawn stroke.
+
+Format of mystrokes.txt:
+The first line is the number of template.
+For each template, the first line is the name of the template, the second line is the number of points n, and the subsequent n lines contain the coordinates of the points.
+
