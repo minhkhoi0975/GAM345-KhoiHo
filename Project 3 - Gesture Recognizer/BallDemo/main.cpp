@@ -223,47 +223,51 @@ int main(int argc, char* argv[])
 				// Press R to recognize the drawn stroke.
 				if (event.key.keysym.sym == SDLK_r)
 				{
-					// Cannot recognize the drawn stroke if it is too short.
-					if (drawnStroke.points.size() < 10)
+					// Don't recognize the stroke while the user is drawing.
+					if (!isDrawing)
 					{
-						cout << "The stroke is too short." << endl;
-					}
-					else
-					{
-						if (strokes.size() == 0)
+						// Cannot recognize the drawn stroke if it is too short.
+						if (drawnStroke.points.size() < 10)
 						{
-							cout << "There is no saved stroke." << endl;
+							cout << "The stroke is too short." << endl;
 						}
-
 						else
 						{
-							// Process the drawn stroke.
-							Stroke drawnStrokeCopy = drawnStroke;
-							drawnStrokeCopy = drawnStrokeCopy.Resample();
-							drawnStrokeCopy = drawnStrokeCopy.RotateBy(-drawnStrokeCopy.GetIndicativeAngle());
-							drawnStrokeCopy = drawnStrokeCopy.ScaleTo();
-							drawnStrokeCopy = drawnStrokeCopy.TranslateTo();
-
-							// Process the saved strokes.
-							vector<Stroke> strokesCopy(strokes);
-							for (Stroke& stroke : strokesCopy)
+							if (strokes.size() == 0)
 							{
-								stroke = stroke.Resample();
-								stroke = stroke.RotateBy(-stroke.GetIndicativeAngle());
-								stroke = stroke.ScaleTo();
-								stroke = stroke.TranslateTo();
+								cout << "There is no saved stroke." << endl;
 							}
 
-							// Recognize the stroke.
-							Stroke matchingStroke;
-							float score;
-							drawnStrokeCopy.Recognize(strokesCopy, 250, matchingStroke, score);
+							else
+							{
+								// Process the drawn stroke.
+								Stroke drawnStrokeCopy = drawnStroke;
+								drawnStrokeCopy = drawnStrokeCopy.Resample();
+								drawnStrokeCopy = drawnStrokeCopy.RotateBy(-drawnStrokeCopy.GetIndicativeAngle());
+								drawnStrokeCopy = drawnStrokeCopy.ScaleTo();
+								drawnStrokeCopy = drawnStrokeCopy.TranslateTo();
 
-							// Display the matching stroke and the score.
-							stringstream matchingStrokeSS;
-							matchingStrokeSS << fixed << setprecision(2);
-							matchingStrokeSS << matchingStroke.name << " (Score = " << score << ")" << endl;
-							SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Matching Stroke", matchingStrokeSS.str().c_str(), SDL_GetWindowFromID(screen->context->windowID));
+								// Process the saved strokes.
+								vector<Stroke> strokesCopy(strokes);
+								for (Stroke& stroke : strokesCopy)
+								{
+									stroke = stroke.Resample();
+									stroke = stroke.RotateBy(-stroke.GetIndicativeAngle());
+									stroke = stroke.ScaleTo();
+									stroke = stroke.TranslateTo();
+								}
+
+								// Recognize the stroke.
+								Stroke matchingStroke;
+								float score;
+								drawnStrokeCopy.Recognize(strokesCopy, 250, matchingStroke, score);
+
+								// Display the matching stroke and the score.
+								stringstream matchingStrokeSS;
+								matchingStrokeSS << fixed << setprecision(2);
+								matchingStrokeSS << matchingStroke.name << " (Score = " << score << ")" << endl;
+								SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION, "Matching Stroke", matchingStrokeSS.str().c_str(), SDL_GetWindowFromID(screen->context->windowID));
+							}
 						}
 					}
 				}
