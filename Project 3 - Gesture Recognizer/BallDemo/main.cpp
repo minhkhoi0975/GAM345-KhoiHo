@@ -159,72 +159,92 @@ int main(int argc, char* argv[])
 		{
 			if (event.type == SDL_QUIT)
 				done = true;
-			if (event.type == SDL_KEYDOWN)
+
+			// Hold left mouse to draw.
+			if (event.type == SDL_MOUSEBUTTONDOWN)
 			{
-				// Press ESC to exit the program.
-				if (event.key.keysym.sym == SDLK_ESCAPE)
-					done = true;
-
-				// Press S to save the stroke.
-				if (event.key.keysym.sym == SDLK_s)
-				{
-					SwitchToConsoleWindow(argv[0]);
-
-					// Cannot save the drawn stroke if it is too short.
-					if (drawnStroke.points.size() < 10)
-					{
-						cout << "Cannot save the stroke: The stroke is too short." << endl;
-					}
-					else
-					{
-						system("cls");
-
-						// Ask the user the enter the name of the stroke.
-						while (true)
-						{
-							cout << "Enter the name of the stroke: ";
-
-							if (getline(cin, drawnStroke.name))
-							{
-								break;
-							}
-							else
-							{
-								cout << "Invalid name. ";
-								cin.clear();
-								cin.ignore(100, '\n');
-							}
-						}
-
-						// Add the stroke to the stroke vector.
-						strokes.push_back(drawnStroke);
-
-						// Sort the strokes.
-						sort(strokes.begin(), strokes.end());
-
-						// Save the strokes.
-						bool canSave = SaveStrokes("mystrokes.txt", strokes);
-
-						if (canSave)
-						{
-							cout << "The stroke \"" << drawnStroke.name << "\" has been successfully saved to " << STROKE_FILENAME << endl;
-						}
-					}
-
-					SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
-				}
-
-				// Press C to clear the drawn stroke.
-				if (event.key.keysym.sym == SDLK_c)
+				if (event.button.button == SDL_BUTTON_LEFT)
 				{
 					drawnStroke.points.clear();
+					isDrawing = true;
 				}
+			}
 
-				// Press R to recognize the drawn stroke.
-				if (event.key.keysym.sym == SDLK_r)
+			// Release left mouse to stop drawing.
+			if (event.type == SDL_MOUSEBUTTONUP)
+			{
+				if (event.button.button == SDL_BUTTON_LEFT)
 				{
-					// Don't recognize the stroke while the user is drawing.
-					if (!isDrawing)
+					isDrawing = false;
+				}
+			}
+
+			if (event.type == SDL_KEYDOWN)
+			{
+				// Don't process key press when the user is still drawing.
+				if (!isDrawing)
+				{
+					// Press ESC to exit the program.
+					if (event.key.keysym.sym == SDLK_ESCAPE)
+						done = true;
+
+					// Press S to save the stroke.
+					if (event.key.keysym.sym == SDLK_s)
+					{
+						SwitchToConsoleWindow(argv[0]);
+
+						// Cannot save the drawn stroke if it is too short.
+						if (drawnStroke.points.size() < 10)
+						{
+							cout << "Cannot save the stroke: The stroke is too short." << endl;
+						}
+						else
+						{
+							system("cls");
+
+							// Ask the user the enter the name of the stroke.
+							while (true)
+							{
+								cout << "Enter the name of the stroke: ";
+
+								if (getline(cin, drawnStroke.name))
+								{
+									break;
+								}
+								else
+								{
+									cout << "Invalid name. ";
+									cin.clear();
+									cin.ignore(100, '\n');
+								}
+							}
+
+							// Add the stroke to the stroke vector.
+							strokes.push_back(drawnStroke);
+
+							// Sort the strokes.
+							sort(strokes.begin(), strokes.end());
+
+							// Save the strokes.
+							bool canSave = SaveStrokes("mystrokes.txt", strokes);
+
+							if (canSave)
+							{
+								cout << "The stroke \"" << drawnStroke.name << "\" has been successfully saved to " << STROKE_FILENAME << endl;
+							}
+						}
+
+						SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
+					}
+
+					// Press C to clear the drawn stroke.
+					if (event.key.keysym.sym == SDLK_c)
+					{
+						drawnStroke.points.clear();
+					}
+
+					// Press R to recognize the drawn stroke.
+					if (event.key.keysym.sym == SDLK_r)
 					{
 						// Cannot recognize the drawn stroke if it is too short.
 						if (drawnStroke.points.size() < 10)
@@ -270,147 +290,129 @@ int main(int argc, char* argv[])
 							}
 						}
 					}
-				}
-	
-				// Press V to view an existing stroke.
-				if (event.key.keysym.sym == SDLK_v)
-				{
-					SwitchToConsoleWindow(argv[0]);
 
-					system("cls");
-
-					// Display the saved strokes.
-					cout << "List of saved strokes: " << endl;
-					for (const Stroke& stroke : strokes)
+					// Press V to view an existing stroke.
+					if (event.key.keysym.sym == SDLK_v)
 					{
-						cout << "\t" << stroke.name << endl;
-					}
-					cout << endl;
+						SwitchToConsoleWindow(argv[0]);
 
-					// Ask the user to enter which stroke they want to view.
-					string strokeToView;
-					while (true)
-					{
-						cout << "Enter the name of the stroke to view: ";
+						system("cls");
 
-						if (getline(cin, strokeToView))
+						// Display the saved strokes.
+						cout << "List of saved strokes: " << endl;
+						for (const Stroke& stroke : strokes)
 						{
-							break;
+							cout << "\t" << stroke.name << endl;
+						}
+						cout << endl;
+
+						// Ask the user to enter which stroke they want to view.
+						string strokeToView;
+						while (true)
+						{
+							cout << "Enter the name of the stroke to view: ";
+
+							if (getline(cin, strokeToView))
+							{
+								break;
+							}
+							else
+							{
+								cout << "Invalid name. ";
+								cin.clear();
+								cin.ignore(100, '\n');
+							}
+						}
+
+						// Find the stroke.
+						bool strokeFound = false;
+						for (int i = 0; i < strokes.size(); ++i)
+						{
+							if (strokes[i].name == strokeToView)
+							{
+								drawnStroke = strokes[i];
+								strokeFound = true;
+								break;
+							}
+						}
+
+						if (strokeFound)
+						{
+							cout << "Viewing the stroke \"" << drawnStroke.name << "\"." << endl;
 						}
 						else
 						{
-							cout << "Invalid name. ";
-							cin.clear();
-							cin.ignore(100, '\n');
+							cout << "Cannot view the stroke \"" << strokeToView << "\": The stroke does not exist." << endl;
 						}
+
+						SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
 					}
 
-					// Find the stroke.
-					bool strokeFound = false;
-					for (int i = 0; i < strokes.size(); ++i)
+					// Press D to delete a save stroke.
+					if (event.key.keysym.sym == SDLK_d)
 					{
-						if (strokes[i].name == strokeToView)
+						SwitchToConsoleWindow(argv[0]);
+
+						system("cls");
+
+						// Display the saved strokes.
+						cout << "List of saved strokes: " << endl;
+						for (const Stroke& stroke : strokes)
 						{
-							drawnStroke = strokes[i];
-							strokeFound = true;
-							break;
+							cout << "\t" << stroke.name << endl;
 						}
-					}
+						cout << endl;
 
-					if (strokeFound)
-					{
-						cout << "Viewing the stroke \"" << drawnStroke.name << "\"." << endl;
-					}
-					else
-					{
-						cout << "Cannot view the stroke \"" << strokeToView << "\": The stroke does not exist." << endl;
-					}
-
-					SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
-				}
-				
-				// Press D to delete a save stroke.
-				if (event.key.keysym.sym == SDLK_d)
-				{
-					SwitchToConsoleWindow(argv[0]);
-
-					system("cls");
-
-					// Display the saved strokes.
-					cout << "List of saved strokes: " << endl;
-					for (const Stroke& stroke : strokes)
-					{
-						cout << "\t" << stroke.name << endl;
-					}
-					cout << endl;
-
-					// Ask the user to enter which stroke they want to delete.
-					string strokeToDelete;
-					while (true)
-					{
-						cout << "Enter the name of the stroke to delete: ";
-
-						if (getline(cin, strokeToDelete))
+						// Ask the user to enter which stroke they want to delete.
+						string strokeToDelete;
+						while (true)
 						{
-							break;
+							cout << "Enter the name of the stroke to delete: ";
+
+							if (getline(cin, strokeToDelete))
+							{
+								break;
+							}
+							else
+							{
+								cout << "Invalid name. " << endl;
+								cin.clear();
+								cin.ignore(100, '\n');
+							}
 						}
-						else
+
+						// Find and delete the strokes that match the name.
+						int i = 0;
+						while (i < strokes.size())
 						{
-							cout << "Invalid name. " << endl;
-							cin.clear();
-							cin.ignore(100, '\n');
+							if (strokes[i].name == strokeToDelete)
+							{
+								strokes.erase(strokes.begin() + i);
+							}
+							else
+							{
+								++i;
+							}
 						}
+
+						cout << "\"" << strokeToDelete << "\" has been removed from " << STROKE_FILENAME << endl;
+
+						SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
 					}
 
-					// Find and delete the strokes that match the name.
-					int i = 0;
-					while (i < strokes.size())
+					// Press T to resample the drawn stroke.
+					if (event.key.keysym.sym == SDLK_t)
 					{
-						if (strokes[i].name == strokeToDelete)
-						{
-							strokes.erase(strokes.begin() + i);
-						}
-						else
-						{
-							++i;
-						}
+						drawnStroke = drawnStroke.Resample();
+						drawnStroke = drawnStroke.RotateBy(-drawnStroke.GetIndicativeAngle());
+						drawnStroke = drawnStroke.ScaleTo();
+						drawnStroke = drawnStroke.TranslateTo(Vector2(SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 2));
 					}
-
-					cout << "\"" << strokeToDelete << "\" has been removed from " << STROKE_FILENAME << endl;
-
-					SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
-				}
-
-				// Press T to resample the drawn stroke.
-				if (event.key.keysym.sym == SDLK_t)
-				{
-					drawnStroke = drawnStroke.Resample();
-					drawnStroke = drawnStroke.RotateBy(-drawnStroke.GetIndicativeAngle());
-					drawnStroke = drawnStroke.ScaleTo();
-					drawnStroke = drawnStroke.TranslateTo(Vector2(SCREEN_HEIGHT / 2, SCREEN_HEIGHT / 2));
-				}
-			}
-
-			// Hold left mouse to draw.
-			if (event.type == SDL_MOUSEBUTTONDOWN)
-			{
-				if (event.button.button == SDL_BUTTON_LEFT)
-				{
-					drawnStroke.points.clear();
-					isDrawing = true;
-				}
-			}
-
-			// Release left mouse to stop drawing.
-			if (event.type == SDL_MOUSEBUTTONUP)
-			{
-				if (event.button.button == SDL_BUTTON_LEFT)
-				{
-					isDrawing = false;
 				}
 			}
 		}
 
+		// Get the current position of the mouse.
 		SDL_GetMouseState(&mouseX, &mouseY);
 
 		// Holding mouse button
