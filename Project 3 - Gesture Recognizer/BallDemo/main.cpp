@@ -1,14 +1,10 @@
 // $1 Single-Stroke Gesture Recognizer.
 // Programmer: Khoi Ho
 
-
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <vector>
-#include <map>
-#include <limits>
-#include <filesystem>
 #include <sstream>
 #include "SDL_gpu.h"
 #include "SDL_syswm.h"
@@ -16,7 +12,6 @@
 #include "Random.h"
 #include "Vector2.h"
 #include "Stroke.h"
-#include "utils.h"
 using namespace std;
 
 // Open the stroke file and read the strokes.
@@ -107,6 +102,26 @@ bool SaveStrokes(const string& fileName, const vector<Stroke>& strokes)
 	return false;
 }
 
+// Switch from main window to console window. Need the path of the executable.
+void SwitchToConsoleWindow(const char* programPath)
+{
+	HWND hWnd = ::FindWindow(NULL, programPath);
+	if (hWnd)
+	{
+		::SetForegroundWindow(hWnd);
+	}
+}
+
+// Switch from console window to main window. Need the reference to the SDL_Window.
+void SwitchToMainWindow(SDL_Window* window)
+{
+	static SDL_SysWMinfo wmInfo;
+	SDL_VERSION(&wmInfo.version);
+	SDL_GetWindowWMInfo(window, &wmInfo);
+
+	::SetForegroundWindow(wmInfo.info.win.window);
+}
+
 int main(int argc, char* argv[])
 {
 	const int SCREEN_WIDTH = 800;
@@ -153,6 +168,8 @@ int main(int argc, char* argv[])
 				// Press S to save the stroke.
 				if (event.key.keysym.sym == SDLK_s)
 				{
+					SwitchToConsoleWindow(argv[0]);
+
 					// Cannot save the drawn stroke if it is too short.
 					if (drawnStroke.points.size() < 10)
 					{
@@ -193,6 +210,8 @@ int main(int argc, char* argv[])
 							cout << "The stroke \"" << drawnStroke.name << "\" has been successfully saved to " << STROKE_FILENAME << endl;
 						}
 					}
+
+					SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
 				}
 
 				// Press C to clear the drawn stroke.
@@ -252,6 +271,8 @@ int main(int argc, char* argv[])
 				// Press V to view an existing stroke.
 				if (event.key.keysym.sym == SDLK_v)
 				{
+					SwitchToConsoleWindow(argv[0]);
+
 					system("cls");
 
 					// Display the saved strokes.
@@ -300,11 +321,15 @@ int main(int argc, char* argv[])
 					{
 						cout << "Cannot view the stroke \"" << strokeToView << "\": The stroke does not exist." << endl;
 					}
+
+					SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
 				}
 				
 				// Press D to delete a save stroke.
 				if (event.key.keysym.sym == SDLK_d)
 				{
+					SwitchToConsoleWindow(argv[0]);
+
 					system("cls");
 
 					// Display the saved strokes.
@@ -348,6 +373,8 @@ int main(int argc, char* argv[])
 					}
 
 					cout << "\"" << strokeToDelete << "\" has been removed from " << STROKE_FILENAME << endl;
+
+					SwitchToMainWindow(SDL_GetWindowFromID(screen->context->windowID));
 				}
 
 				// Press T to resample the drawn stroke.
@@ -366,7 +393,7 @@ int main(int argc, char* argv[])
 				if (event.button.button == SDL_BUTTON_LEFT)
 				{
 					drawnStroke.points.clear();
-					isDrawing = true;		
+					isDrawing = true;
 				}
 			}
 
